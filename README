@@ -1,0 +1,42 @@
+PutIO folder sync
+-----------------
+
+This handy perl script helps you downloading whole folders from the Put.io webservice on a regular basis. Just set up folders from your Account and a local path and the script will keep stuff in snyc for you (very useful for fetching stuff thats automatically downloaded to put.io via e.g. torrent RSS feeds).
+
+INSTALLATION
+============
+
+Make sure you have installed the following perl modules via cpan:
+
+WebService::PutIo::Files 
+Getopt::Long
+Data::Dumper
+LWP::UserAgent
+XML::Simple
+
+ATTENTION: The Put.io CPAN module is currently outdated becaus it depends on a depcreated class from Mojolocious. I have fixed this in in the file 'PutIo.pm' so you need to overwrite the current PutIo.pm file in your perl libs directory after installing put.io via cpan!
+
+SETUP
+=====
+
+Rename config.xml.template to config.xml and enter your API-Key and secret (found in put.io -> Your Account -> Settings) and your put.io username and password (required for https secured downloads).
+
+For each folder you want to sync, add a block like this:
+
+  <sync>
+    <remote_path>TV Shows</remote_path>
+    <local_path>/AnkhMorpork/Series/Inbox</local_path>
+  </sync>
+
+to the config.xml (inside <putiosyncconfig>).
+
+Make sure that remote folders don't start with a / but local ones are!
+
+RUN
+===
+
+To run the script, simply use
+
+$ perl putiosync.pl
+
+from the command line. Have fun!

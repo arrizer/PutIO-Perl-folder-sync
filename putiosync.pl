@@ -3,8 +3,6 @@
 use WebService::PutIo::Files;
 use Getopt::Long;
 use Data::Dumper;
-use WWW::Mechanize;
-use URI::Escape;
 use LWP::UserAgent;
 use XML::Simple;
 
