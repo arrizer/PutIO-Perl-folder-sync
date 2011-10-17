@@ -1,0 +1,10 @@
+<putiosyncconfig>
+  <api_key>KEY</api_key>
+  <api_secret>PASSWORD</api_secret>
+  <account_name>EMAIL</account_name>
+  <account_password>PASSWORD</account_password>
+  <sync>
+    <remote_path>TV Shows</remote_path>
+    <local_path>/AnkhMorpork/Series/Inbox</local_path>
+  </sync>
+</putiosyncconfig>
