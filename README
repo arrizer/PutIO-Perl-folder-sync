@@ -14,8 +14,6 @@ Data::Dumper
 LWP::UserAgent
 XML::Simple
 
-ATTENTION: The Put.io CPAN module is currently outdated becaus it depends on a depcreated class from Mojolocious. I have fixed this in in the file 'PutIo.pm' so you need to overwrite the current PutIo.pm file in your perl libs directory after installing put.io via cpan!
-
 SETUP
 =====
 
