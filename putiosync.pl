@@ -26,6 +26,10 @@ foreach my $folder (@{$config->{"sync"}}){
   my $source = $folder->{"remote_path"};
   my $target = $folder->{"local_path"};
   print("Syncing folder '$source' to '$target'...\n");
+  if (!(-d $target)) {
+	print "The target folder $target doesn't exist!\n";
+    next();
+  }  
   my $source_id = findPutIoFolderId($source);
   if(!$source_id){
     print("The folder '$source' does not exist!\n");
@@ -50,8 +54,8 @@ foreach my $file (@downloadQueue){
   printf("Fetching '%s'\n", $file->{"name"});
   my $url = $file->{"download_url"};
   my $filename = $file->{"target"}."/".$file->{"name"};
-  downloadFile($url, $filename);
-  if($do_delete){
+  my $succeed = downloadFile($url, $filename);
+  if($succeed && $do_delete){
     $putio->delete(id => $file->{"id"});
     print("Deleted the file from put.io!\n")
   }
@@ -107,8 +111,10 @@ sub downloadFile
   my $response = $agent->get($url, ':content_file' => $filename, ':size_hint' => 10000);
   if(!$response->is_success()){
     print "\rDownload failed: ".$response->status_line()."\n";
+	return 0;
   }else{
     print "\rDownload succeeded                                               \n";
+	return 1;
   }
 }
 
