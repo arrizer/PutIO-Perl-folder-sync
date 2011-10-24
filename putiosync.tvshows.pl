@@ -167,6 +167,9 @@ sub moveFile
   my $folder = expandPlaceholders($match, $folder_pattern);
   my $file = expandPlaceholders($match, $file_pattern);
   
+  #Replace Invalid Path chacracters
+  $file =~ s/[<>:"\/\\|\?\*]/ /g;
+  
   make_path($target.'/'.$folder.'/');
   rename $match->{"file"}, $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
 }
