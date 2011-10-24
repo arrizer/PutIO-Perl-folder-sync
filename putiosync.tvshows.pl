@@ -31,8 +31,8 @@ foreach my $task (@{$config->{"tvshows"}}){
 sub matchFile
 {
   my $file = shift;
-     $file =~ m!(.*)\/([^\/]+)!gi;
-  my ($path, $filename) = ($1, $2);
+     $file =~ m!(.*)\/([^\/]+)\.([0-9a-z]+)$!gi;
+  my ($path, $filename, $extension) = ($1, $2, $3);
   
   my ($series, $season, $episode) = ("","","");
   
@@ -63,6 +63,7 @@ sub matchFile
     if($item){
       my $parent = $tvdb->getSeries($series);
       $item->{"file"} = $file;
+      $item->{"extension"} = $extension;
       $item->{"path"} = $path;
       $item->{"filename"} = $filename;
       $item->{"SeriesName"} = $parent->{"SeriesName"};
@@ -131,8 +132,10 @@ sub filesInFolder
 sub makeSortable
 {
   my $title = shift;
-  $title =~ m!(the|der|die|das|les|le|la) (.*)$!gis;
-  $title = $2.', '.$1 if($1);
+
+  if($title =~ m!^(the|der|die|das|les|le|la) (.*)$!gis){
+    $title = $2.', '.$1 if($1);
+  }
   return $title;
 }
 
@@ -165,7 +168,7 @@ sub moveFile
   my $file = expandPlaceholders($match, $file_pattern);
   
   make_path($target.'/'.$folder.'/');
-  rename $match->{"file"}, $target.'/'.$folder.'/'.$file;
+  rename $match->{"file"}, $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
 }
 
 1;
