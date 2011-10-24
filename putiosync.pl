@@ -5,63 +5,153 @@ use Getopt::Long;
 use Data::Dumper;
 use LWP::UserAgent;
 use XML::Simple;
+use File::Path qw(make_path);
+use Cwd 'abs_path';
+
+our $mypath = abs_path($0); $mypath =~ s![^\/]+$!!gis;
 
 $| = 1;
 
 my $verbose = 0;
-my $autoload = 0;
 my $do_delete = 0;
+my $no_sync = 0;
+my $show_help = 0;
+my $dry_run = 0;
+my $no_extensions = 0;
+my $config_file = $mypath."/config.xml";
+my $version = "0.3";
 
-my $config = XMLin("config.xml", ForceArray => ['sync']);
+# Process command line flags
+GetOptions("verbose|v" => \$verbose,
+           "d|delete" => \$do_delete,
+           "h|help" => \$show_help,
+           "config=s" => \$config_file,
+           "no-sync" => \$no_sync,
+           "d|dry" => \$dry_run,
+           "no-extensions" => \$no_extensions);
 
-GetOptions("verbose|v" => \$verbose, "a|auto" => \$autoload, "d|delete" => \$do_delete);
+our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows']);
 
 my $agent = LWP::UserAgent->new();
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
 
-my @downloadQueue;
+printHelp() if($show_help);
 
-foreach my $folder (@{$config->{"sync"}}){
-  my $source = $folder->{"remote_path"};
-  my $target = $folder->{"local_path"};
-  print("Syncing folder '$source' to '$target'...\n");
-  if (!(-d $target)) {
-	print "The target folder $target doesn't exist!\n";
-    next();
-  }  
+if(!$no_sync){
+  my @downloadQueue = queueSyncItems();
+  # Present queued items
+  printfv(0, "\n%s files queued to download:", $#downloadQueue == -1 ? "No" : ($#downloadQueue + 1));
+  foreach my $file (@downloadQueue){
+    printfv(0, "%s", $file->{"name"});
+  }
+  print("\n");
+  
+  if($#downloadQueue > -1){
+    if(!$dry_run){
+      downloadFiles(\@downloadQueue);
+    }else{
+      printfv(0, "Downloading nothing because dry run is enabled");
+    }
+  }
+}
+if(!$no_extensions){
+  # Run extensions
+  my @extensions = <"$mypath/putiosync.*.pl">;
+  for my $script (@extensions){
+    printfv(1, "Running extension '%s'", $script);
+    require $script;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+sub downloadFiles
+{
+  # Downloads item from a queue
+  my @downloadQueue = @{shift()};
+  my $cnt = 0;
+  foreach my $file (@downloadQueue){
+    $cnt++;
+    printfv(0, "Fetching '%s' [%i of %i]", $file->{"name"}, $cnt, $#downloadQueue + 1);
+    my $url = $file->{"download_url"};
+    make_path($file->{"target"});
+    my $filename = $file->{"target"}."/".$file->{"name"};
+    my $succeed = downloadFile($url, $filename);
+    if($succeed and $do_delete){
+      $putio->delete(id => $file->{"id"});
+      printfv(1, "Deleted the file on put.io");
+    }
+  }
+}
+
+sub queueSyncItems
+{
+  my @downloadQueue;
+  # Queue downloads
+  foreach my $sync_item (@{$config->{"sync"}}){
+    my $source = $sync_item->{"remote_path"};
+    my $target = $sync_item->{"local_path"};
+    my $recursive = $sync_item->{"recursive"} eq 'true';
+    $source =~ s/(^\/|\/$)//gi; # Trim leading and trailing slashes from the source path
+    printfv(0, "Syncing folder '%s' to '%s'...", $source, $target);
+    if (!(-d $target)) {
+    	printfv(0, "The target folder '%s' does not exist!", $target);
+      next();
+    }
+    push(@downloadQueue, queuePutIoFolder($source, $target, $recursive));
+  }
+  
+  return @downloadQueue;
+}
+
+sub queuePutIoFolder
+{
+  my $source = shift;
+  my $target = shift;
+  my $recursive = shift or 0;
+  my @queue = ();
+  
   my $source_id = findPutIoFolderId($source);
   if(!$source_id){
-    print("The folder '$source' does not exist!\n");
-    next();
+    printfv(0, "The folder '$source' was not found on put.io!");
+    return 0;
   }
+
   my $res = $putio->list('parent_id', $source_id);
   foreach my $file (@{$res->results}){
-    next() if($file->{"type"} eq "folder");
-    next() if(-e $target."/".$file->{"name"});
+    if($file->{"type"} eq "folder"){
+      next() if(!$recursive);
+      push(@queue, queuePutIoFolder($source."/".$file->{"name"}, $target."/".$file->{"name"}, 1));
+      next();
+    }
+    if(-e $target."/".$file->{"name"}){
+      my @stat = stat($target."/".$file->{"name"});
+      if(scalar($file->{"size"}) == @stat[7]){
+        printfv(1, "File '%s' already exists and will be skipped", $file->{"name"});
+        next();
+      }else{
+        printfv(1, "File '%s' exists but has a different size. Will be redownloaded", $file->{"name"});
+      }
+    }
     $file->{"target"} = $target;
-    push(@downloadQueue, $file);
+    push(@queue, $file);
   }
+  return @queue;
 }
 
-
-printf("%s files queued to download\n", $#downloadQueue == -1 ? "No" : ($#downloadQueue + 1));
-foreach my $file (@downloadQueue){
-  printf("%s\n", $file->{"name"});
-}
-
-foreach my $file (@downloadQueue){
-  printf("Fetching '%s'\n", $file->{"name"});
-  my $url = $file->{"download_url"};
-  my $filename = $file->{"target"}."/".$file->{"name"};
-  my $succeed = downloadFile($url, $filename);
-  if($succeed && $do_delete){
-    $putio->delete(id => $file->{"id"});
-    print("Deleted the file from put.io!\n")
-  }
-}
-
-sub findPutIoFolderId{
+sub findPutIoFolderId
+{
   findPutIoFolderIdInternal(0, shift, 0); 
 }
 
@@ -102,19 +192,15 @@ sub downloadFile
   $agent->add_handler(response_header => \&didReceiveResponse);
   $agent->add_handler(response_data => \&didReceiveData);
   $agent->credentials("put.io:80", "Put.io File Space", $config->{"account_name"}, $config->{"account_password"});
-  $received_size = 0;
-  $bps = 0;
-  $avg_speed = 0;
-  $avg_speed_s = 0;
-  $avg_speed_q = 0;
+  ($download_size, $received_size, $bps, $avg_speed, $avg_speed_s, $avg_speed_q, $speed_count, $speed) = (0,0,0,0,0,0,0,0);
   $last_tick = time();
-  my $response = $agent->get($url, ':content_file' => $filename, ':size_hint' => 10000);
+  my $response = $agent->get($url, ':content_file' => $filename, ':read_size_hint' => (2 ** 14));
   if(!$response->is_success()){
-    print "\rDownload failed: ".$response->status_line()."\n";
-	return 0;
+    printfv(0, "\rDownload failed: %s", $response->status_line());
+    return 0;
   }else{
-    print "\rDownload succeeded                                               \n";
-	return 1;
+    printfv(0, "\rDownload succeeded                                                     ");
+  	return 1;
   }
 }
 
@@ -139,13 +225,17 @@ sub didReceiveData
     $avg_speed = $avg_speed_s / $avg_speed_q;
   }
   print("\r");
-  printf("-> %.1f %% (%s of %s, %s/s) %s remaining            ", 
-         ($received_size / $download_size) * 100, 
-         fsize($received_size), 
-         fsize($download_size), 
-         fsize($speed), 
-         fduration(($download_size - $received_size) / $avg_speed)
-        );
+  if($download_size > 0){
+    printf("-> %.1f %% (%s of %s, %s/s) %s remaining     ", 
+           ($received_size / $download_size) * 100, 
+           fsize($received_size), 
+           fsize($download_size), 
+           fsize($speed), 
+           fduration(($download_size - $received_size) / $avg_speed)
+          );
+  }else{
+    printf("-> Initiating transfer...                           ");
+  }
 }
 
 sub fsize
@@ -163,4 +253,50 @@ sub fduration
   return sprintf("%.0f days", $seconds / (60 * 60 * 24)) if($seconds >= 60 * 60 * 24);
   return sprintf("%.0f hours", $seconds / (60 * 60)) if($seconds >= 60 * 60);
   return sprintf("%.0f minutes", $seconds / (60)) if($seconds >= 60);
+  return sprintf("%.0f seconds", $seconds) if($seconds < 60);
+  return sprintf("a few seconds", $seconds) if($seconds < 7);
+}
+
+sub printfv
+{
+  # Prints a line to the console if the $level is below or equal the current script verbosity
+  my ($level, $format, @parameters) = @_;
+  printf($format."\n", @parameters) if($level <= $verbose);
+}
+
+sub printHelp
+{
+  print("
+PutIO folder sync - Version $version
+################################################################################
+(C) by Matthias Schwab (putiosync\@matthiasschwab.de)
+
+Automate download of files and folders from the put.io webservice.
+Files from folders specified in the configuration file will be downloaded to the
+specified target on the local disk. See the comments in the config file template
+for details about the configuration.
+
+Usage:   $0 [options]
+
+Options: -v  --verbose        Show more detailed status information
+         -d  --delete         Delete files on put.io after successful download
+         -h  --help           Shows this help screen and exists
+             --config <file>  Use specific config file (default is config.xml)
+         -d  --dry            Dry run (nothing is downloaded, just checking)
+             --no-sync        Skip syncing (only run extension scripts)
+             --no-extensions  Don't run any extension scripts after sycning
+             
+Extensions
+----------
+
+TV Show organizer:
+       Moves tv shows from an inbox folder to organized show and season folders
+       and renames them. Title matching is done via thetvdb.com.
+       Add <tvshows> tags to the config file to configure the this extension.
+       See comments in the config template for details.
+       
+Movie organizer:
+       Not yet implemented!
+");
+  exit();
 }

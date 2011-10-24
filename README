@@ -6,13 +6,15 @@ This handy perl script helps you downloading whole folders from the Put.io webse
 INSTALLATION
 ============
 
-Make sure you have installed the following perl modules via cpan:
+The script requires the following perl modules to be installed:
 
 WebService::PutIo::Files 
 Getopt::Long
 Data::Dumper
 LWP::UserAgent
 XML::Simple
+
+Use 'install_perl_modules.sh' to install/update the modules via the cpan tool
 
 SETUP
 =====
@@ -28,7 +30,7 @@ For each folder you want to sync, add a block like this:
 
 to the config.xml (inside <putiosyncconfig>).
 
-Make sure that remote folders don't start with a / but local ones are!
+See the config file template for details about the configuration.
 
 RUN
 ===
@@ -37,4 +39,6 @@ To run the script, simply use
 
 $ perl putiosync.pl
 
-from the command line. Have fun!
+from the command line.
+Use the -h flag to see all available options.
+I recommend to schedule the script via cronjob, launchd or your native system task scheduler.
