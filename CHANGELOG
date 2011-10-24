@@ -1,0 +1,20 @@
+Version 0.3
+===========
+
+* Recursive download of subdirectories from put.io is now possible
+* Download chunk size increased, results in lower CPU load during downloads
+* File size of local files are compared with the size from put.io and redownloaded if the sizes don't match
+* Added support for extension scripts that can perform file organization and cleanup tasks
+* Added perl module install script
+* Added many command line options for fine control
+
+Version 0.2
+===========
+
+* Files are only deleted from put.io if the download completed successfully
+* Sync items are skipped when the local target folder is not existing
+
+Version 0.1
+===========
+
+* Hello world

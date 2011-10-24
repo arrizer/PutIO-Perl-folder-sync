@@ -1,10 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
 <putiosyncconfig>
-  <api_key>KEY</api_key>
-  <api_secret>PASSWORD</api_secret>
-  <account_name>EMAIL</account_name>
-  <account_password>PASSWORD</account_password>
+  <!-- The API key and secret can be found in your put.io account settings -->
+  <api_key>myapikey</api_key>
+  <api_secret>myapisecret</api_secret>
+
+  <!-- This is your put.io account name and password used for downloading via https -->
+  <account_name>foobar@example.com</account_name>
+  <account_password>mypassword</account_password>
+  
+  <!-- Add a <sync> tag for each remote folder that should be synced -->
   <sync>
-    <remote_path>TV Shows</remote_path>
-    <local_path>/AnkhMorpork/Series/Inbox</local_path>
+    <!-- Path on the put.io filesystem -->
+    <remote_path>Folder Name</remote_path>
+    <!-- Folder on your local system -->
+    <local_path>/path/to/local/folder/</local_path>
+    <!-- Set to 'true' to download all subfolders from put.io -->
+    <recursive>true</recursive>
   </sync>
+  
+  <!-- Add a <tvshows> tag for each folder with tv shows to organize -->  
+  <tvshows>
+    <!-- All media files in this folder will be moved to the <path> folder -->
+    <inbox>/AnkhMorpork/Series/Inbox</inbox>
+    <!-- Root folder of your tv shows media directory -->
+    <path>/AnkhMorpork/Series/Episodes/</path>
+    <!-- Sort structure of the tv shows media directory -->
+    <foldername>/%show_sortable%/Season %season%/</foldername>
+    <filename>%show% S%season%E%episode% %title%</filename>
+    <!-- Use dots instead of spaces in the filenames -->
+    <no_spaces>false</no_spaces>
+    
+    <!-- 
+      Available placeholders for <foldername> and <filename> are: 
+      %show% = Title of the show
+      %show_sortable% = Title of the show optimized for alphabetical sorting
+      %season% = Season number (two digits)
+      %epsiode% = Episode number (two digits)
+      %title% = Title of the episode
+    -->
+  </tvshows>
 </putiosyncconfig>
