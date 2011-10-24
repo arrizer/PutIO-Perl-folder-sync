@@ -58,11 +58,15 @@ if(!$no_sync){
 }
 if(!$no_extensions){
   # Run extensions
-  my @extensions = <"$mypath/putiosync.*.pl">;
-  for my $script (@extensions){
-    printfv(1, "Running extension '%s'", $script);
-    require $script;
-  }
+  	opendir DIR, $mypath;
+	while (my $file = readdir(DIR)) {
+		next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
+		my $script = $mypath."/".$file;
+		#die $script;
+		require $script;
+		printf(1, "Running extension '%s'", $script);
+	}
+	closedir DIR;
 }
 
 
