@@ -28,7 +28,7 @@ GetOptions("verbose|v" => \$verbose,
            "h|help" => \$show_help,
            "config=s" => \$config_file,
            "no-sync" => \$no_sync,
-           "d|dry" => \$dry_run,
+           "dry" => \$dry_run,
            "no-extensions" => \$no_extensions);
 
 our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows']);
