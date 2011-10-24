@@ -5,3 +5,4 @@ sudo cpan install Data::Dumper
 sudo cpan install LWP::UserAgent
 sudo cpan install XML::Simple
 sudo cpan install File::Path
+sudo cpan install TVDB::API
