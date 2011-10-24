@@ -51,7 +51,7 @@ sub matchFile
     $series =~ s/,_/ /gi;
     $series =~ s/20\d{2}//gi; #remove year
     #$series =~ s/(the|der|die|das|les|le|la)//gi;
-	printfv(0, "# %s S%02iE%02i", $series, $season, $episode);
+	#printfv(0, "# %s S%02iE%02i", $series, $season, $episode);
     if($series =~ m/\S+/ and $season =~ m/^[0-9]+$/ and $episode =~ m/^[0-9]+$/ and $season > 0 and $episode > 0){
       $extracted = 1;
       last;
