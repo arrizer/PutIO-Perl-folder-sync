@@ -6,9 +6,10 @@ use Data::Dumper;
 use LWP::UserAgent;
 use XML::Simple;
 use File::Path qw(make_path);
+use File::Basename;
 use Cwd 'abs_path';
 
-our $mypath = abs_path($0); $mypath =~ s![^\/]+$!!gis;
+our $mypath = abs_path(File::Basename::dirname(__FILE__));
 
 $| = 1;
 
