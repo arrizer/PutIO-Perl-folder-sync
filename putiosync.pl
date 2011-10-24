@@ -19,7 +19,7 @@ my $show_help = 0;
 my $dry_run = 0;
 my $no_extensions = 0;
 my $config_file = $mypath."/config.xml";
-my $version = "0.3";
+my $version = "0.4";
 
 # Process command line flags
 GetOptions("verbose|v" => \$verbose,
@@ -75,26 +75,6 @@ if(!$no_extensions){
 
 
 
-
-sub downloadFiles
-{
-  # Downloads item from a queue
-  my @downloadQueue = @{shift()};
-  my $cnt = 0;
-  foreach my $file (@downloadQueue){
-    $cnt++;
-    printfv(0, "Fetching '%s' [%i of %i]", $file->{"name"}, $cnt, $#downloadQueue + 1);
-    my $url = $file->{"download_url"};
-    make_path($file->{"target"});
-    my $filename = $file->{"target"}."/".$file->{"name"};
-    my $succeed = downloadFile($url, $filename);
-    if($succeed and $do_delete){
-      $putio->delete(id => $file->{"id"});
-      printfv(1, "Deleted the file on put.io");
-    }
-  }
-}
-
 sub queueSyncItems
 {
   my @downloadQueue;
@@ -113,6 +93,25 @@ sub queueSyncItems
   }
   
   return @downloadQueue;
+}
+
+sub downloadFiles
+{
+  # Downloads item from a queue
+  my @downloadQueue = @{shift()};
+  my $cnt = 0;
+  foreach my $file (@downloadQueue){
+    $cnt++;
+    printfv(0, "Fetching '%s' [%i of %i]", $file->{"name"}, $cnt, $#downloadQueue + 1);
+    my $url = $file->{"download_url"};
+    make_path($file->{"target"});
+    my $filename = $file->{"target"}."/".$file->{"name"};
+    my $succeed = downloadFile($url, $filename);
+    if($succeed and $do_delete){
+      $putio->delete(id => $file->{"id"});
+      printfv(1, "Deleted the file on put.io");
+    }
+  }
 }
 
 sub queuePutIoFolder
@@ -213,8 +212,9 @@ sub didReceiveResponse
 sub didReceiveData
 {
   my($response, $ua, $h, $data) = @_;
-  $received_size += length($data);
-  $speed_count += length($data);
+  my $data_size = scalar(length($data));
+  $received_size += $data_size;
+  $speed_count += $data_size;
   my $now = time();
   if($last_tick < $now){
     $speed = $speed_count;
@@ -225,6 +225,7 @@ sub didReceiveData
     $avg_speed = $avg_speed_s / $avg_speed_q;
   }
   print("\r");
+  #print "Chunk = $data_size ";
   if($download_size > 0){
     printf("-> %.1f %% (%s of %s, %s/s) %s remaining     ", 
            ($received_size / $download_size) * 100, 
@@ -236,6 +237,7 @@ sub didReceiveData
   }else{
     printf("-> Initiating transfer...                           ");
   }
+  return 1;
 }
 
 sub fsize
@@ -269,7 +271,9 @@ sub printHelp
   print("
 PutIO folder sync - Version $version
 ################################################################################
-(C) by Matthias Schwab (putiosync\@matthiasschwab.de)
+Copyright by Matthias Schwab (putiosync\@matthiasschwab.de)
+Feature requests and bugs? Please report to:
+    https://github.com/arrizer/PutIO-Perl-folder-sync/issues
 
 Automate download of files and folders from the put.io webservice.
 Files from folders specified in the configuration file will be downloaded to the
@@ -280,7 +284,7 @@ Usage:   $0 [options]
 
 Options: -v  --verbose        Show more detailed status information
          -d  --delete         Delete files on put.io after successful download
-         -h  --help           Shows this help screen and exists
+         -h  --help           Show this help screen and exit
              --config <file>  Use specific config file (default is config.xml)
          -d  --dry            Dry run (nothing is downloaded, just checking)
              --no-sync        Skip syncing (only run extension scripts)
