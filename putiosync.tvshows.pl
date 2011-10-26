@@ -39,7 +39,8 @@ sub matchFile
   my $match_filename = $filename;
   $match_filename =~ s/\./ /gi;
   my @extractors = ('(.*)\s*S\s*([0-9]+)\s*E([0-9]+)\s*(.*)$', 
-                    '(.*)\s*\s*([0-9]+)\s*[xX]([0-9]+)\s*(.*)$');
+                    '(.*)\s*\s*[^0-9]+([0-9]+)\s*[xX]([0-9]+)\s*(.*)$', #Fornat: NAME 03x01
+                    '(.*)\s*\s*([0-9]{1,2})\s*([0-9]{2})\s*(.*)$', ); #Format: NAME 102 => S01E02
   my $extracted = 0;
   foreach my $regexp (@extractors){
     $match_filename =~ m/$regexp/gi;
@@ -48,7 +49,9 @@ sub matchFile
     $episode = scalar $3;
     $series =~ s/(^\s+|\s$)//gi;
     $series =~ s/,_/ /gi;
+    $series =~ s/20\d{2}//gi; #remove year
     #$series =~ s/(the|der|die|das|les|le|la)//gi;
+	#printfv(0, "# %s S%02iE%02i", $series, $season, $episode);
     if($series =~ m/\S+/ and $season =~ m/^[0-9]+$/ and $episode =~ m/^[0-9]+$/ and $season > 0 and $episode > 0){
       $extracted = 1;
       last;
@@ -167,6 +170,9 @@ sub moveFile
   
   my $folder = expandPlaceholders($match, $folder_pattern);
   my $file = expandPlaceholders($match, $file_pattern);
+  
+  #Replace Invalid Path chacracters
+  $file =~ s/[<>:"\/\\|\?\*]/ /g;
   
   make_path($target.'/'.$folder.'/');
   my $destination = $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
