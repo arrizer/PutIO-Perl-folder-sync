@@ -27,8 +27,13 @@
     <!-- Sort structure of the tv shows media directory -->
     <foldername>/%show_sortable%/Season %season%/</foldername>
     <filename>%show% S%season%E%episode% %title%</filename>
-    <!-- Use dots instead of spaces in the filenames -->
-    <no_spaces>false</no_spaces>
+    <!-- What to do if an episode is already in the library:
+          never = Never overwrite data in the library (default if tag is not present)
+          always = Always use the new file
+          ask = Ask each time
+          bigger = Overwrite if the income file is bigger in size (<-> has better quality)
+     -->
+    <overwrite_strategy>ask</overwrite_strategy>
     
     <!-- 
       Available placeholders for <foldername> and <filename> are: 

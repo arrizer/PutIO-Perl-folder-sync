@@ -1,8 +1,8 @@
 echo "This will install or update the required perl modules for putiosync..."
-sudo cpan install WebService::PutIo::Files
-sudo cpan install Getopt::Long
-sudo cpan install Data::Dumper
-sudo cpan install LWP::UserAgent
-sudo cpan install XML::Simple
-sudo cpan install File::Path
-sudo cpan install TVDB::API
+perl -MCPAN -e 'install WebService::PutIo::Files'
+perl -MCPAN -e 'install Getopt::Long'
+perl -MCPAN -e 'install Data::Dumper'
+perl -MCPAN -e 'install LWP::UserAgent'
+perl -MCPAN -e 'install XML::Simple'
+perl -MCPAN -e 'install File::Path'
+perl -MCPAN -e 'install TVDB::API'

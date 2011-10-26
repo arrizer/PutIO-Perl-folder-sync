@@ -24,7 +24,7 @@ foreach my $task (@{$config->{"tvshows"}}){
     my $match = matchFile($inbox.$file);
     next() if(!$match);
     printfv(0, "-> %s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"});
-    moveFile($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"});
+    moveFile($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"}, $task->{"overwrite_strategy"});
   }
 }
 
@@ -163,12 +163,41 @@ sub moveFile
   my $target = shift;
   my $folder_pattern = shift;
   my $file_pattern = shift;
+  my $overwrite_strategy = shift;
   
   my $folder = expandPlaceholders($match, $folder_pattern);
   my $file = expandPlaceholders($match, $file_pattern);
   
   make_path($target.'/'.$folder.'/');
-  rename $match->{"file"}, $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
+  my $destination = $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
+  if(-e $destination){
+    my @stat_new = stat($match->{"file"});
+    my @stat_old = stat($destination);
+    if($overwrite_strategy eq "always"){
+      printfv(0, "     The file is already in the library and will be overwritten.");
+    }
+    elsif($overwrite_strategy eq "ask"){ 
+      my $choice = "";
+      while($choice !~ m/^(y|n)/gi){
+        printf("     File already there (new: %s, old: %s). Overwrite? [y/n]: ", fsize(@stat_new[7]), fsize(@stat_old[7]));
+        $choice = <STDIN>;
+      }
+      return if($choice ne "y\n");
+    }
+    elsif($overwrite_strategy eq "bigger"){ 
+      if(@stat_new[7] > @stat_old[7]){
+        printv(0, "     A smaller file is already present in the library and will be overwritten.");
+      }else{
+        printv(0, "     A bigger or equally sized file is already present in the library. Skipping.");
+        return;
+      }
+    }
+    else{ #aka 'never'
+      printfv(0, "     The file is already in the library. Skipping.");
+      return;
+    }
+  }
+  rename $match->{"file"}, $destination;
 }
 
 1;

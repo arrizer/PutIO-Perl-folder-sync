@@ -34,6 +34,9 @@ GetOptions("verbose|v" => \$verbose,
 our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows']);
 
 my $agent = LWP::UserAgent->new();
+   $agent->add_handler(response_header => \&didReceiveResponse);
+   $agent->add_handler(response_data => \&didReceiveData);
+   $agent->credentials("put.io:80", "Put.io File Space", $config->{"account_name"}, $config->{"account_password"});
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
 
@@ -58,12 +61,11 @@ if(!$no_sync){
 }
 if(!$no_extensions){
   # Run extensions
-  	opendir DIR, $mypath;
-	while (my $file = readdir(DIR)) {
-		next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
-		my $script = $mypath."/".$file;
-		#die $script;
-		require $script;
+  opendir DIR, $mypath;
+  while (my $file = readdir(DIR)) {
+    next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
+    my $script = $mypath."/".$file;
+    require $script;
 		printf(1, "Running extension '%s'", $script);
 	}
 	closedir DIR;
@@ -192,10 +194,6 @@ sub downloadFile
 {
   my $url = shift;
   my $filename = shift;
-  
-  $agent->add_handler(response_header => \&didReceiveResponse);
-  $agent->add_handler(response_data => \&didReceiveData);
-  $agent->credentials("put.io:80", "Put.io File Space", $config->{"account_name"}, $config->{"account_password"});
   ($download_size, $received_size, $bps, $avg_speed, $avg_speed_s, $avg_speed_q, $speed_count, $speed) = (0,0,0,0,0,0,0,0);
   $last_tick = time();
   my $response = $agent->get($url, ':content_file' => $filename, ':read_size_hint' => (2 ** 14));
