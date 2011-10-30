@@ -289,7 +289,7 @@ Options: -v  --verbose        Show more detailed status information
          -d  --delete         Delete files on put.io after successful download
          -h  --help           Show this help screen and exit
              --config <file>  Use specific config file (default is config.xml)
-         -d  --dry            Dry run (nothing is downloaded, just checking)
+             --dry            Dry run (nothing is downloaded, just checking)
              --no-sync        Skip syncing (only run extension scripts)
              --no-extensions  Don't run any extension scripts after sycning
              
