@@ -1,5 +1,5 @@
-#!/usr/bin/perl
-$| = 1;
+#!/usr/bin/env perl -w
+$| = 1; # Disable output caching
 
 use WebService::PutIo::Files;
 use Getopt::Long;
@@ -11,7 +11,7 @@ use File::Basename;
 use Term::ANSIColor;
 use Cwd 'abs_path';
 
-my $version = '0.4';
+my $version = '0.5';
 my $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
 our $mypath = abs_path(File::Basename::dirname(__FILE__));
 my $config_file = $mypath."/config.xml";
@@ -36,29 +36,15 @@ my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"},
 
 if(!$options{'no-sync'}){
   my @downloadQueue = queueSyncItems();
-  # Present queued items
-  printfv(0, "\n%s files queued to download", $#downloadQueue == -1 ? "No" : ($#downloadQueue + 1));
-  foreach my $file (@downloadQueue){
-    printfvc(0, "%s", 'cyan', $file->{"name"});
-  }
-  printfv(0, "\n");
-  
-  if($#downloadQueue > -1){
-    if(!$options{'dry'}){
-      downloadFiles(\@downloadQueue);
-    }else{
-      printfvc(0, "Downloading nothing because dry run is enabled", 'red');
-    }
-  }
+  downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
 }
 if(!$options{'no-extensions'}){
   # Run extensions
   opendir DIR, $mypath;
   while (my $file = readdir(DIR)) {
     next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
-    my $script = $mypath."/".$file;
-    require $script;
-		printfv(1, "Running extension '%s'", $script);
+    require $mypath."/".$file;
+		printfv(1, "Running extension '%s'", $file);
 	}
 	closedir DIR;
 }
@@ -97,7 +83,10 @@ sub queueSyncItems
     }
     push(@downloadQueue, @newQueue);
   }
-  
+  printfv(0, "%s files queued to download", $#downloadQueue == -1 ? "No" : ($#downloadQueue + 1));
+  foreach my $file (@downloadQueue){
+    printfvc(0, "%s", 'cyan', $file->{"name"});
+  }  
   return @downloadQueue;
 }
 
@@ -324,15 +313,15 @@ sub printfvc
 sub processCommandLine
 {
   my @flags = (
-    "v|verbose", 
-    "q|quiet", 
-    "h|help", 
-    "config=s", 
-    "no-sync", 
-    "dry", 
-    "no-extensions", 
-    "n|non-interactive", 
-    "no-resume", 
+    "v|verbose",
+    "q|quiet",
+    "h|help",
+    "config=s",
+    "no-sync",
+    "dry",
+    "no-extensions",
+    "n|non-interactive",
+    "no-resume",
     "pid=s"
   );
   GetOptions(\%options, @flags);
@@ -345,13 +334,18 @@ sub processCommandLine
 
 sub printHelp
 {
-print("
-PutIO folder sync - Version $version
-================================================================================
-Copyright by Matthias Schwab (putiosync\@matthiasschwab.de)
-Feature requests and bugs? Please report to:
-    https://github.com/arrizer/PutIO-Perl-folder-sync/issues
+printfvc(0, '
+ ______   _    _  _______ _____  ______   ______  __    _   ______   ______ 
+| |  | \ | |  | |   | |    | |  / |  | \ / |      \ \  | | | |  \ \ | |     
+| |__|_/ | |  | |   | |    | |  | |  | | \'------.  \_\_| | | |  | | | |     
+|_|      \_|__|_|   |_|   _|_|_ \_|__|_/  ____|_/  ____|_| |_|  |_| |_|____ 
 
+Version %s
+', 'blue', $version);
+printfvc(0, "Copyright by Matthias Schwab (putiosync\@matthiasschwab.de)
+Feature requests and bugs? Please report to:
+    https://github.com/arrizer/PutIO-Perl-folder-sync/issues", 'cyan');
+print("
 Automate download of files and folders from the put.io webservice.
 Files from folders specified in the configuration file will be downloaded to the
 specified target on the local disk. See the comments in the config file template
