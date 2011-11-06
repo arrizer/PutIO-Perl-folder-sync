@@ -17,6 +17,8 @@ BEGIN {
 	if ( $^O =~ /Win32/i ) {
 		require Win32::Console::ANSI;
 		import Win32::Console::ANSI;
+		require Win32::File;
+		import Win32::File;
 	}
 }
 
@@ -178,6 +180,9 @@ sub downloadFiles
     my $url = $file->{"download_url"};
     make_path($file->{"target"});
     make_path($file->{"target_folder"}.'/'.$download_temp_dir);
+	if ( $^O =~ /Win32/i ) {
+		Win32::File::SetAttributes($file->{"target_folder"}.'/'.$download_temp_dir,DIRECTORY | HIDDEN)
+	}
     my $filename = $file->{"target"}."/".$file->{"name"};
     my $temp_filename = $file->{"target_folder"}.'/'.$download_temp_dir.'/'.$file->{"name"};
     my $succeeded = downloadFile($url, $filename, $temp_filename, $file->{"size"});
