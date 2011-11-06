@@ -7,6 +7,7 @@ Version 0.5
 * Expected and actual downloaded file sizes are compared after download
 * Bugfix: Displaying wrong remaining time while a download is initiating
 * Bugfix: Recursive download of folders with same name on the same level didn't work properly
+* Colored console output (working with windows and UNIX terminals)
 
 Version 0.4
 ===========

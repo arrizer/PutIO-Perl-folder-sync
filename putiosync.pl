@@ -11,7 +11,7 @@ use File::Basename;
 use Term::ANSIColor;
 use Cwd 'abs_path';
 #use warnings;
-#use strict;
+use strict;
 
 BEGIN {
 	if ( $^O =~ /Win32/i ) {
@@ -89,8 +89,8 @@ sub queueSyncItems
     }
     my @newQueue = queuePutIoFolderPath($source, $target, $recursive);
     for(my $i = 0; $i < scalar(@newQueue); $i++){
-      @newQueue[$i]->{"delete_source"} = $delete_source;
-      @newQueue[$i]->{"target_folder"} = $target;
+      $newQueue[$i]->{"delete_source"} = $delete_source;
+      $newQueue[$i]->{"target_folder"} = $target;
     }
     push(@downloadQueue, @newQueue);
   }
@@ -131,7 +131,7 @@ sub queuePutIoFolder
     }
     if(-e $target."/".$file->{"name"}){
       my @stat = stat($target."/".$file->{"name"});
-      if(scalar($file->{"size"}) == @stat[7]){
+      if(scalar($file->{"size"}) == $stat[7]){
         printfv(1, "File '%s' already exists and will be skipped", $file->{"name"});
         next();
       }else{
@@ -162,7 +162,7 @@ sub findPutIoFolderIdInternal
   
   foreach my $file (@{$res->results}){
     next() if($file->{"type"} ne "folder");
-    if($file->{"name"} eq @path[$depth]){
+    if($file->{"name"} eq $path[$depth]){
       return $file->{"id"} if($#path == $depth);
       return findPutIoFolderIdInternal($file->{"id"}, $path, $depth + 1);
     }
@@ -211,12 +211,12 @@ sub downloadFile
   my $temp_filename = shift;
   my $expected_size = shift;
     
-  ($download_size, $received_size, $bps, $avg_speed, $avg_speed_s, $avg_speed_q, $speed_count, $speed, $byte_offset, $http_status) = (0,0,0,0,0,0,0,0,0,0);
+  ($download_size, $received_size, $avg_speed, $avg_speed_s, $avg_speed_q, $speed_count, $speed, $byte_offset, $http_status) = (0,0,0,0,0,0,0,0,0);
   if(-e $temp_filename and !$options{'no-resume'}){
     my @stat = stat($temp_filename);
-    if($expected_size > @stat[7]){
-      $byte_offset = @stat[7];
-      $received_size = @stat[7];
+    if($expected_size > $stat[7]){
+      $byte_offset = $stat[7];
+      $received_size = $stat[7];
     }
   }
   open DOWNLOAD, ($byte_offset > 0) ? ">>" : ">", $temp_filename or die "Unable to create download file: $!";
@@ -225,7 +225,7 @@ sub downloadFile
   my $response = $agent->get($url, ':read_size_hint' => (2 ** 14));
   close DOWNLOAD;
   my @stat = stat($temp_filename);
-  my $actual_size = @stat[7];
+  my $actual_size = $stat[7];
   
   if(!$response->is_success()){
     printfvc(0, "\rDownload failed: %s", 'red', $response->status_line());
@@ -311,7 +311,7 @@ sub printfv
 {
   # Prints a line to the console if the $level is below or equal the current script verbosity
   my ($level, $format, @parameters) = @_;
-  printf($format."\n", @parameters) if($level <= $verbose);
+  printf($format."\n", @parameters) if($level <= $verbosity);
 }
 
 sub printfvc
@@ -319,13 +319,25 @@ sub printfvc
   # Prints a colored line
   my ($level, $format, $color, @parameters) = @_;
   print color $color;
-  printf($format, @parameters) if($level <= $verbose);
+  printf($format, @parameters) if($level <= $verbosity);
   print color 'reset';
   print("\n");
 }
 
 sub processCommandLine
 {
+  $options{"v"} = 0;
+  $options{"q"} = 0;
+  $options{"h"} = 0;
+  $options{"config"} = "";
+  $options{"no-sync"} = 0;
+  $options{"dry"} = 0;
+  $options{"no-extensions"} = 0;
+  $options{"n"} = 0;
+  $options{"no-resume"} = 0;
+  $options{"pid"} = "";
+  $options{"no-color"} = 0;
+  
   my @flags = (
     "v|verbose", 
     "q|quiet", 
@@ -374,14 +386,14 @@ Options: -v  --verbose         Show more detailed status information
          -h  --help            Show this help screen and exit
          -n  --non-interactive Don't ask anything
              --config <file>   Use specific config file (default is config.xml)
-             --dry             Dry run (nothing is downloaded, just checking)
+             --dry             Dry run (nothing is downloaded, moved or changed)
              --no-sync         Skip syncing (only run extension scripts)
              --no-extensions   Don't run any extension scripts after sycning
              --no-delete       Never delete files from put.io
              --no-resume       Redownload partially received files instead of
                                resuming the download
              --pid <file>      PID file location (default = ./putiosync.pid)
-             --no-color		   Disables colored output
+             --no-color        Disables colored output
              
 Extensions
 ----------
