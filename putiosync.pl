@@ -12,11 +12,10 @@ use Term::ANSIColor;
 use Cwd 'abs_path';
 
 BEGIN {
-	my $osname = $^O;
-
-	if( $osname eq 'MSWin32' ){{
-		use Win32::Console::ANSI;
-	}}
+	if ( $^O =~ /Win32/i ) {
+		require Win32::Console::ANSI;
+		import Win32::Console::ANSI;
+	}
 }
 
 
