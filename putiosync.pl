@@ -11,6 +11,15 @@ use File::Basename;
 use Term::ANSIColor;
 use Cwd 'abs_path';
 
+BEGIN {
+	my $osname = $^O;
+
+	if( $osname eq 'MSWin32' ){{
+		use Win32::Console::ANSI;
+	}}
+}
+
+
 my $version = '0.4';
 my $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
 our $mypath = abs_path(File::Basename::dirname(__FILE__));
