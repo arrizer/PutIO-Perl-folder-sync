@@ -333,13 +333,15 @@ sub processCommandLine
     "no-extensions", 
     "n|non-interactive", 
     "no-resume", 
-    "pid=s"
+    "pid=s",
+    "no-color", 
   );
   GetOptions(\%options, @flags);
   $verbosity = 1 if($options{'v'});
   $verbosity = -1 if($options{'q'});
   $config_file = $options{'config'} if($options{'config'} ne "");
   $pid_file = $options{'pid'} if($options{'pid'} ne "");
+  $ENV{'ANSI_COLORS_DISABLED'} = 1 if($options{'no-color'});
   printHelp() if($options{'h'});
 }
 
@@ -371,6 +373,7 @@ Options: -v  --verbose         Show more detailed status information
              --no-resume       Redownload partially received files instead of
                                resuming the download
              --pid <file>      PID file location (default = ./putiosync.pid)
+             --no-color		   Disables colored output
              
 Extensions
 ----------
