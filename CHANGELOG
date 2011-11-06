@@ -1,3 +1,13 @@
+Version 0.5
+===========
+
+* Deleting files from put.io is now a config item option rather than a command line option
+* Partially transferred files are stored in a hidden folder
+* Partially transferred file downloads are resumed
+* Expected and actual downloaded file sizes are compared after download
+* Bugfix: Displaying wrong remaining time while a download is initiating
+* Bugfix: Recursive download of folders with same name on the same level didn't work properly
+
 Version 0.4
 ===========
 

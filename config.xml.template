@@ -16,6 +16,8 @@
     <local_path>/path/to/local/folder/</local_path>
     <!-- Set to 'true' to download all subfolders from put.io -->
     <recursive>true</recursive>
+    <!-- Set to 'true' to delete downloads from put.io after successful download -->
+    <delete>false</delete>
   </sync>
   
   <!-- Add a <tvshows> tag for each folder with tv shows to organize -->  

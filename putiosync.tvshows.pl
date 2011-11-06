@@ -125,8 +125,9 @@ sub filesInFolder
     if(-d $file_abs){
       push(@files, filesInFolder($path, $subdir."/".$file));
       next();
+    }elsif($file =~ m/\.(mov|avi|mp4|mpeg4|mkv|mts|ts)$/gi){
+      push(@files, $subdir.'/'.$file);
     }
-    push(@files, $subdir.'/'.$file);
   }
   closedir DIR;
   return @files;
