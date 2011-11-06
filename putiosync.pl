@@ -10,13 +10,13 @@ use File::Path qw(make_path);
 use File::Basename;
 use Term::ANSIColor;
 use Cwd 'abs_path';
-use warnings;
-use strict;
+#use warnings;
+#use strict;
 
 BEGIN {
-	my $osname = $^O;
-	if($osname eq 'MSWin32'){
+	if ( $^O =~ /Win32/i ) {
 		require Win32::Console::ANSI;
+		import Win32::Console::ANSI;
 	}
 }
 

@@ -14,6 +14,9 @@ Data::Dumper
 LWP::UserAgent
 XML::Simple
 
+On Windows additionally:
+Win32::Console::ANSI
+
 Use 'install_perl_modules.sh' to install/update the modules via the cpan tool
 
 SETUP
