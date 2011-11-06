@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl
 $| = 1; # Disable output caching
 
 use WebService::PutIo::Files;
@@ -10,6 +10,15 @@ use File::Path qw(make_path);
 use File::Basename;
 use Term::ANSIColor;
 use Cwd 'abs_path';
+use warnings;
+use strict;
+
+BEGIN {
+	my $osname = $^O;
+	if($osname eq 'MSWin32'){
+		require Win32::Console::ANSI;
+	}
+}
 
 my $version = '0.5';
 my $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
