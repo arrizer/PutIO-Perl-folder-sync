@@ -113,7 +113,8 @@ sub downloadFiles
     my $url = $file->{"download_url"};
     make_path($file->{"target"});
     my $filename = $file->{"target"}."/".$file->{"name"};
-    my $succeed = downloadFile($url, $filename);
+	my $expectedSize = scalar($file->{"size"});
+    my $succeed = downloadFile($url, $filename, $expectedSize);
     if($succeed and $do_delete){
       $putio->delete(id => $file->{"id"});
       printfv(1, "Deleted the file on put.io");
@@ -194,13 +195,42 @@ sub downloadFile
 {
   my $url = shift;
   my $filename = shift;
+  my $expectedSize = shift;
+  my $tryCount = 0;
+  my $maxTryCount = 2;
   ($download_size, $received_size, $bps, $avg_speed, $avg_speed_s, $avg_speed_q, $speed_count, $speed) = (0,0,0,0,0,0,0,0);
-  $last_tick = time();
-  my $response = $agent->get($url, ':content_file' => $filename, ':read_size_hint' => (2 ** 14));
-  if(!$response->is_success()){
-    printfv(0, "\rDownload failed: %s", $response->status_line());
-    return 0;
-  }else{
+  my $error = 0;
+  my $response;
+  do
+  {
+		$tryCount++;
+		$error = 0;
+	  if ($tryCount > 1)
+	  {
+		printfv(1, "Trying to redownload '%s' ...\n", $filename);
+	  }
+	  $last_tick = time();
+	  $response = $agent->get($url, ':content_file' => $filename, ':read_size_hint' => (2 ** 14));
+	  
+	  #Check if downloaded file has correct size (if connection lost, return code is success but file is incomplete)
+	  my @stat = stat($filename);
+	  if($response->is_success())
+		{
+			if ($expectedSize != @stat[7]){
+				printfv(1, "\nFile '%s' downloaded but has a different size (expected: %s, has: %s). Maybe lost connection?\n", $filename, fsize($expectedSize), fsize(@stat[7]));
+				$error = 1;
+			  } else {
+				last;
+			  }
+		} else {
+			$error = 1;
+	}
+  } while ($error > 0 && $tryCount < $maxTryCount);
+  if ($tryCount >= $maxTryCount && $error > 0)
+  {
+    printfv(0, "\rDownload failed: %s. Giving up after %d tries.", $response->status_line(),$tryCount);
+	return 0;
+  } else{
     printfv(0, "\rDownload succeeded                                                     ");
   	return 1;
   }
