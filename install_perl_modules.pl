@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-use CPAN::Shell;
+use CPAN;
 
 if($^O !~ /Win32/i and getpwuid($<) ne 'root'){
   print "Please run the module installer as root!\n";
