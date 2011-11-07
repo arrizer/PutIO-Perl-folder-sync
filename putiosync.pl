@@ -11,7 +11,7 @@ use File::Basename;
 use Term::ANSIColor;
 use Cwd 'abs_path';
 #use warnings;
-use strict;
+#use strict;
 
 BEGIN {
 	if ( $^O =~ /Win32/i ) {
