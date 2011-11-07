@@ -275,7 +275,7 @@ sub didReceiveData
   #print "Chunk = $data_size ";
   if($download_size > 0 and $http_status eq "200" or $http_status eq "206"){
     print DOWNLOAD $data;
-    printf("-> %.1f %% (%s of %s, %s/s) %s", 
+    printf("-> %.1f %% (%s of %s, %s/s) %s      ", 
       ($received_size / $download_size) * 100, 
       fsize($received_size), 
       fsize($download_size), 
