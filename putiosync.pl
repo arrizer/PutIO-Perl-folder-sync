@@ -204,6 +204,11 @@ my $avg_speed_s;
 my $byte_offset;
 my $http_status;
 
+sub ContentCb
+{
+	#Do nothing, there is another handler for data
+}
+
 sub downloadFile
 {
   my $url = shift;
@@ -222,7 +227,7 @@ sub downloadFile
   open DOWNLOAD, ($byte_offset > 0) ? ">>" : ">", $temp_filename or die "Unable to create download file: $!";
   binmode DOWNLOAD;
   $last_tick = time();
-  my $response = $agent->get($url, ':read_size_hint' => (2 ** 14));
+  my $response = $agent->get($url, ':read_size_hint' => (2 ** 14), ':content_cb' => \&ContentCb);
   close DOWNLOAD;
   my @stat = stat($temp_filename);
   my $actual_size = $stat[7];
