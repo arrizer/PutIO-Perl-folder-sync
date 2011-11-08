@@ -29,6 +29,12 @@ my @requiredModules = (
   'TVDB::API'
 );
 
+if($^O =~ /Win32/i)
+{
+	push(@requiredModules,"Win32::Console::ANSI");
+	push(@requiredModules,"Win32::File");
+}
+
 for my $moduleName (@requiredModules){
   printf("Installing '%s'...\n", $moduleName);
   CPAN::Shell->install($moduleName);
