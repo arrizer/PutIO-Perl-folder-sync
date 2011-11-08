@@ -36,7 +36,6 @@
           bigger = Overwrite if the income file is bigger in size (<-> has better quality)
      -->
     <overwrite_strategy>ask</overwrite_strategy>
-    
     <!-- 
       Available placeholders for <foldername> and <filename> are: 
       %show% = Title of the show
