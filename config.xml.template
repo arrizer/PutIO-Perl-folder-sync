@@ -71,4 +71,18 @@
     <!-- Access token secret for your twitter account -->
     <secret>123456789</secret>
   </twitter>
+  
+  <mail>
+    <!-- From mail address -->
+    <from>PutIO Sync &gt;putiosync@github.com&lt;</from>
+    <!-- To mail address -->
+    <to>your.name@domain.com</to>
+    <!-- Mail subject -->
+	<to>PutIO Synced</to>
+    <!-- 
+		Optional: A mail server to send the mail
+		If none specified it will be detected automatically
+	-->
+    <!-- <server>server</server> -->
+  </mail>
 </putiosyncconfig>
