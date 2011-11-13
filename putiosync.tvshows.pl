@@ -1,11 +1,16 @@
-#!/usr/bin/env perl
-
 use TVDB::API;
 use Data::Dumper;
 
-die "This script is not meant to be run separately!" if(!$config);
-
 my $tvdb = TVDB::API::new('5EFCC7790F190138');
+our @added_shows = ();
+
+my $pattern_map = {
+    '%show%' => 'SeriesName',
+    '%show_sortable%' => 'SeriesNameSortable',
+    '%season%' => 'SeasonNumberLong',
+    '%episode%' => 'EpisodeNumberLong',
+    '%title%' => 'EpisodeName'
+};
 
 foreach my $task (@{$config->{"tvshows"}}){
   my $inbox = $task->{"inbox"};
@@ -24,7 +29,7 @@ foreach my $task (@{$config->{"tvshows"}}){
     my $match = matchFile($inbox.$file);
     next() if(!$match);
     printfv(0, "-> %s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"});
-    moveFile($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"}, $task->{"overwrite_strategy"});
+    moveToLibrary($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"}, $pattern_map, $task->{"overwrite_strategy"});
   }
 }
 
@@ -61,7 +66,7 @@ sub matchFile
     printfv(1, "Looking for '%s' S%02iE%02i...", $series, $season, $episode);
     my $item = undef;
     $item = $tvdb->getEpisode($series, $season, $episode);
-    $series = disambiguateSeriesName($series, $filename) if(!$item);
+    $series = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
     $item = $tvdb->getEpisode($series, $season, $episode) if($series);
     if($item){
       my $parent = $tvdb->getSeries($series);
@@ -98,6 +103,7 @@ sub disambiguateSeriesName
   if($choice == 0){
     # More than one series matches, ask the user!
     printf("To which series does '%s' belong?\n", $filename);
+    printfvc(0, "(0) None of the listed", 'yellow');
     my $cnt = 0;
     foreach my $key (@keys){
       $cnt++;
@@ -106,105 +112,15 @@ sub disambiguateSeriesName
     }
   }
   
-  while(!($choice > 0)){
+  while(!($choice >= 0)){
     print("Pick one: ");
     $choice = <STDIN>;
   }
-  return $matches->{@keys[$choice - 1]}->{"SeriesName"};
-}
-
-sub filesInFolder
-{
-  my $path = shift;
-  my $subdir = shift or "";
-  my @files = ();
-  opendir DIR, $path.'/'.$subdir;
-  foreach my $file (readdir DIR){
-    next() if($file =~ m/^\./gi);
-    my $file_abs = $path.'/'.$subdir.'/'.$file;
-    if(-d $file_abs){
-      push(@files, filesInFolder($path, $subdir."/".$file));
-      next();
-    }elsif($file =~ m/\.(mov|avi|mp4|mpeg4|mkv|mts|ts)$/gi){
-      push(@files, $subdir.'/'.$file);
-    }
+  if($choice > 0){
+    return $matches->{@keys[$choice - 1]}->{"SeriesName"};
+  }else{
+    return undef;
   }
-  closedir DIR;
-  return @files;
-}
-
-sub makeSortable
-{
-  my $title = shift;
-
-  if($title =~ m!^(the|der|die|das|les|le|la|los|a|an) (.*)$!gis){
-    $title = $2.', '.$1;
-  }
-  return $title;
-}
-
-sub expandPlaceholders
-{
-  my $match = shift;
-  my $pattern = shift;
-  my $map = {
-    '%show%' => 'SeriesName',
-    '%show_sortable%' => 'SeriesNameSortable',
-    '%season%' => 'SeasonNumberLong',
-    '%episode%' => 'EpisodeNumberLong',
-    '%title%' => 'EpisodeName'
-  };
-  foreach my $key (keys %{$map}){
-    my $value = $match->{$map->{$key}};
-    $pattern =~ s!$key!$value!gi;
-  }
-  return $pattern;
-}
-
-sub moveFile
-{
-  my $match = shift;
-  my $target = shift;
-  my $folder_pattern = shift;
-  my $file_pattern = shift;
-  my $overwrite_strategy = shift;
-  
-  my $folder = expandPlaceholders($match, $folder_pattern);
-  my $file = expandPlaceholders($match, $file_pattern);
-  
-  #Replace Invalid Path chacracters
-  $file =~ s/[<>:"\/\\|\?\*]/ /g;
-  
-  make_path($target.'/'.$folder.'/');
-  my $destination = $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
-  if(-e $destination){
-    my @stat_new = stat($match->{"file"});
-    my @stat_old = stat($destination);
-    if($overwrite_strategy eq "always"){
-      printfv(0, "     The file is already in the library and will be overwritten.");
-    }
-    elsif($overwrite_strategy eq "ask"){ 
-      my $choice = "";
-      while($choice !~ m/^(y|n)/gi){
-        printf("     File already there (new: %s, old: %s). Overwrite? [y/n]: ", fsize(@stat_new[7]), fsize(@stat_old[7]));
-        $choice = <STDIN>;
-      }
-      return if($choice ne "y\n");
-    }
-    elsif($overwrite_strategy eq "bigger"){ 
-      if(@stat_new[7] > @stat_old[7]){
-        printv(0, "     A smaller file is already present in the library and will be overwritten.");
-      }else{
-        printv(0, "     A bigger or equally sized file is already present in the library. Skipping.");
-        return;
-      }
-    }
-    else{ #aka 'never'
-      printfv(0, "     The file is already in the library. Skipping.");
-      return;
-    }
-  }
-  rename $match->{"file"}, $destination;
 }
 
 1;

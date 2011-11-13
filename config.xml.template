@@ -23,9 +23,9 @@
   <!-- Add a <tvshows> tag for each folder with tv shows to organize -->  
   <tvshows>
     <!-- All media files in this folder will be moved to the <path> folder -->
-    <inbox>/AnkhMorpork/Series/Inbox</inbox>
+    <inbox>/path/to/my/inbox</inbox>
     <!-- Root folder of your tv shows media directory -->
-    <path>/AnkhMorpork/Series/Episodes/</path>
+    <path>/path/to/my/tvshows</path>
     <!-- Sort structure of the tv shows media directory -->
     <foldername>/%show_sortable%/Season %season%/</foldername>
     <filename>%show% S%season%E%episode% %title%</filename>
@@ -45,4 +45,29 @@
       %title% = Title of the episode
     -->
   </tvshows>
+  
+  <movies>
+    <!-- All media files in this folder will be moved to the <path> folder -->
+    <inbox>/path/to/my/movies-inbox</inbox>
+    <!-- Folder of your movies directory -->
+    <path>/path/to/my/movies</path>
+    <filename>%title_sortable% (%year%) %quality% (%audio_tracks%)</filename>
+    <!-- 
+      Available placeholders for <filename> are: 
+      %title% = Title of the movie
+      %title_sortable% = Title of the movie optimized for alphabetical sorting
+      %year% = Release year of the movie
+      %director% = Movie director
+      %genre% = Comma separated list of genres
+    -->
+    <!-- Same as for <tvshows> -->
+    <overwrite_strategy>ask</overwrite_strategy>
+  </movies>
+  
+  <twitter>
+    <!-- Access token for your twitter account -->
+    <access_token>123456789</access_token>
+    <!-- Access token secret for your twitter account -->
+    <secret>123456789</secret>
+  </twitter>
 </putiosyncconfig>

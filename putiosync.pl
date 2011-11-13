@@ -9,12 +9,16 @@ use XML::Simple;
 use File::Path qw(make_path);
 use File::Basename;
 use Term::ANSIColor;
+use Term::ReadKey;
 use Cwd 'abs_path';
+use utf8;
 #use warnings;
 #use strict;
 
+$SIG{INT} = \&catchSigInt;
+
 BEGIN {
-	if ( $^O =~ /Win32/i ) {
+	if ($^O =~ /Win32/i){
 		require Win32::Console::ANSI;
 		import Win32::Console::ANSI;
 		require Win32::File;
@@ -22,25 +26,26 @@ BEGIN {
 	}
 }
 
-my $version = '0.5';
-my $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
+my $version = '0.5.1';
 our $mypath = abs_path(File::Basename::dirname(__FILE__));
+our $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
 my $config_file = $mypath."/config.xml";
 my $download_temp_dir = ".putiosync-downloading";
 my $pid_file = "./putiosync.pid";
+
+require $mypath.'/utils.pl';
 
 # Process command line flags
 our %options = ();
 processCommandLine();
 
 # Read config XML
-our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows']);
+our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
 
 # Initialise HTTP and putio clients
 my $agent = LWP::UserAgent->new();
    $agent->add_handler(request_prepare => \&prepareRequest);
    $agent->add_handler(response_header => \&didReceiveResponse);
-#  $agent->add_handler(response_data => \&didReceiveData);
    $agent->credentials("put.io:80", "Put.io File Space", $config->{"account_name"}, $config->{"account_password"});
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
@@ -49,17 +54,7 @@ if(!$options{'no-sync'}){
   my @downloadQueue = queueSyncItems();
   downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
 }
-if(!$options{'no-extensions'}){
-  # Run extensions
-  opendir DIR, $mypath;
-  while (my $file = readdir(DIR)) {
-    next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
-    require $mypath."/".$file;
-		printfv(1, "Running extension '%s'", $file);
-	}
-	closedir DIR;
-}
-
+runExtensions() if(!$options{'no-extensions'});
 exit();
 
 
@@ -289,42 +284,6 @@ sub didReceiveData
   return 1;
 }
 
-sub fsize
-{
-  my $size = shift; 
-  return sprintf("%.1f GiB", $size / (1024 ** 3)) if($size > (1024 ** 3));
-  return sprintf("%.1f MiB", $size / (1024 ** 2)) if($size > (1024 ** 2));
-  return sprintf("%.1f kiB", $size / (1024 ** 1)) if($size > (1024 ** 1));
-  return sprintf("%.0f Bytes", $size);
-}
-
-sub fduration
-{
-  my $seconds = shift;
-  return sprintf("%.0f days", $seconds / (60 * 60 * 24)) if($seconds >= 60 * 60 * 24);
-  return sprintf("%.0f hours", $seconds / (60 * 60)) if($seconds >= 60 * 60);
-  return sprintf("%.0f minutes", $seconds / (60)) if($seconds >= 60);
-  return sprintf("%.0f seconds", $seconds) if($seconds < 60);
-  return sprintf("a few seconds", $seconds) if($seconds < 7);
-}
-
-sub printfv
-{
-  # Prints a line to the console if the $level is below or equal the current script verbosity
-  my ($level, $format, @parameters) = @_;
-  printf($format."\n", @parameters) if($level <= $verbosity);
-}
-
-sub printfvc
-{
-  # Prints a colored line
-  my ($level, $format, $color, @parameters) = @_;
-  print color $color;
-  printf($format, @parameters) if($level <= $verbosity);
-  print color 'reset';
-  print("\n");
-}
-
 sub processCommandLine
 {
   $options{"v"} = 0;
@@ -351,6 +310,7 @@ sub processCommandLine
     "no-resume", 
     "pid=s",
     "no-color", 
+    "imdb-results=i"
   );
   GetOptions(\%options, @flags);
   $verbosity = 1 if($options{'v'});
@@ -380,7 +340,7 @@ Files from folders specified in the configuration file will be downloaded to the
 specified target on the local disk. See the comments in the config file template
 for details about the configuration.
 
-Usage:   $0 [options]
+  Usage: $0 [options]
 
 Options: -v  --verbose         Show more detailed status information
          -q  --quiet           No output whatsoever
@@ -396,17 +356,25 @@ Options: -v  --verbose         Show more detailed status information
              --pid <file>      PID file location (default = ./putiosync.pid)
              --no-color        Disables colored output
 
-Extensions
-----------
-
-TV Show organizer:
-       Moves TV shows from an inbox folder to organized show and season folders
-       and renames them. Title matching is done via thetvdb.com.
-       Add <tvshows> tags to the config file to configure the this extension.
-       See comments in the config template for details.
-       
-Movie organizer:
-       Not yet implemented!
+Movie organizer specific options:
+             --imdb-results <n> Display n suggestions for IMDB movies
 ");
+  exit();
+}
+
+sub runExtensions
+{
+  opendir DIR, $mypath;
+  while (my $file = readdir(DIR)) {
+    next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
+    printfv(1, "Running extension '%s'", $file);
+    require $mypath."/".$file;
+	}
+	closedir DIR;
+}
+
+sub catchSigInt
+{
+  printfvc(0, "Catched termination signal", 'red bold');
   exit();
 }
