@@ -35,6 +35,7 @@ foreach my $task (@{$config->{"movies"}}){
     printfv(0, "-> %s (%i)", $match->{"Title"}, $match->{"Year"});
     $match->{"TitleSortable"} = makeSortable($match->{"Title"});
     moveToLibrary($match, $task->{"path"}, "", $task->{"filename"}, $pattern_map, $task->{"overwrite_strategy"});
+    push(@media_added, sprintf("%s (%i)", $match->{"Title"}, $match->{"Year"}));
   }
 }
 

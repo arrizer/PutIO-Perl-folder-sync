@@ -29,13 +29,6 @@
     <!-- Sort structure of the tv shows media directory -->
     <foldername>/%show_sortable%/Season %season%/</foldername>
     <filename>%show% S%season%E%episode% %title%</filename>
-    <!-- What to do if an episode is already in the library:
-          never = Never overwrite data in the library (default if tag is not present)
-          always = Always use the new file
-          ask = Ask each time
-          bigger = Overwrite if the income file is bigger in size (<-> has better quality)
-     -->
-    <overwrite_strategy>ask</overwrite_strategy>
     <!-- 
       Available placeholders for <foldername> and <filename> are: 
       %show% = Title of the show
@@ -44,6 +37,14 @@
       %epsiode% = Episode number (two digits)
       %title% = Title of the episode
     -->
+    
+    <!-- What to do if an episode is already in the library:
+          never = Never overwrite data in the library (default if tag is not present)
+          always = Always use the new file
+          ask = Ask each time
+          bigger = Overwrite if the income file is bigger in size (<-> has better quality)
+     -->
+    <overwrite_strategy>ask</overwrite_strategy>
   </tvshows>
   
   <movies>
@@ -51,7 +52,6 @@
     <inbox>/path/to/my/movies-inbox</inbox>
     <!-- Folder of your movies directory -->
     <path>/path/to/my/movies</path>
-    <filename>%title_sortable% (%year%) %quality% (%audio_tracks%)</filename>
     <!-- 
       Available placeholders for <filename> are: 
       %title% = Title of the movie
@@ -60,6 +60,7 @@
       %director% = Movie director
       %genre% = Comma separated list of genres
     -->
+    <filename>%title_sortable% (%year%) %quality% (%audio_tracks%)</filename>
     <!-- Same as for <tvshows> -->
     <overwrite_strategy>ask</overwrite_strategy>
   </movies>

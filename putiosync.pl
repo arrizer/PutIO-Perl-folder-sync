@@ -12,14 +12,15 @@ use Term::ANSIColor;
 use Term::ReadKey;
 use Cwd 'abs_path';
 use utf8;
-#use warnings;
-#use strict;
+use warnings;
+use strict;
 
+my $windows = $^O =~ /Win32/i;
 $SIG{INT} = \&catchSigInt;
 
 BEGIN {
-	if ($^O =~ /Win32/i){
-		require Win32::Console::ANSI;
+	if($windows){
+    require Win32::Console::ANSI;
 		import Win32::Console::ANSI;
 		require Win32::File;
 		import Win32::File;
@@ -50,6 +51,7 @@ my $agent = LWP::UserAgent->new();
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
 
+our @media_added = ();
 if(!$options{'no-sync'}){
   my @downloadQueue = queueSyncItems();
   downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
@@ -175,9 +177,10 @@ sub downloadFiles
     my $url = $file->{"download_url"};
     make_path($file->{"target"});
     make_path($file->{"target_folder"}.'/'.$download_temp_dir);
-	if ( $^O =~ /Win32/i ) {
-		Win32::File::SetAttributes($file->{"target_folder"}.'/'.$download_temp_dir,DIRECTORY | HIDDEN)
-	}
+  	if ($windows){
+      # Disabled this temporarily as it does not compile strict!
+      #Win32::File::SetAttributes($file->{"target_folder"}.'/'.$download_temp_dir, DIRECTORY | HIDDEN);
+    }
     my $filename = $file->{"target"}."/".$file->{"name"};
     my $temp_filename = $file->{"target_folder"}.'/'.$download_temp_dir.'/'.$file->{"name"};
     my $succeeded = downloadFile($url, $filename, $temp_filename, $file->{"size"});
@@ -310,7 +313,8 @@ sub processCommandLine
     "no-resume", 
     "pid=s",
     "no-color", 
-    "imdb-results=i"
+    "imdb-results=i",
+    "no-twitter"
   );
   GetOptions(\%options, @flags);
   $verbosity = 1 if($options{'v'});
@@ -342,22 +346,21 @@ for details about the configuration.
 
   Usage: $0 [options]
 
-Options: -v  --verbose         Show more detailed status information
-         -q  --quiet           No output whatsoever
-         -h  --help            Show this help screen and exit
-         -n  --non-interactive Don't ask anything
-             --config <file>   Use specific config file (default is config.xml)
-             --dry             Dry run (nothing is downloaded, moved or changed)
-             --no-sync         Skip syncing (only run extension scripts)
-             --no-extensions   Don't run any extension scripts after sycning
-             --no-delete       Never delete files from put.io
-             --no-resume       Redownload partially received files instead of
-                               resuming the download
-             --pid <file>      PID file location (default = ./putiosync.pid)
-             --no-color        Disables colored output
-
-Movie organizer specific options:
-             --imdb-results <n> Display n suggestions for IMDB movies
+Options: -v  --verbose          Show more detailed status information
+         -q  --quiet            No output whatsoever
+         -h  --help             Show this help screen and exit
+         -n  --non-interactive  Don't ask anything
+             --config <file>    Use specific config file (default is config.xml)
+             --dry              Dry run (nothing is downloaded, moved or changed)
+             --no-sync          Skip syncing (only run extension scripts)
+             --no-extensions    Don't run any extension scripts after sycning
+             --no-delete        Never delete files from put.io
+             --no-resume        Redownload partially received files instead of
+                                resuming the download
+             --pid <file>       PID file location (default = ./putiosync.pid)
+             --no-color         Disables colored output
+             --imdb-results <n> Display n suggestions for movies (default is 4)
+             --no-twitter       Don't twitter anything
 ");
   exit();
 }
@@ -365,12 +368,17 @@ Movie organizer specific options:
 sub runExtensions
 {
   opendir DIR, $mypath;
+  my @extensions = ();
   while (my $file = readdir(DIR)) {
-    next() if ($file !~ m/^putiosync\..*?\.pl$/gi);
-    printfv(1, "Running extension '%s'", $file);
-    require $mypath."/".$file;
+    next() if ($file !~ m/^putiosync\.(.*?)\.pl$/gi);
+    push(@extensions, $1);
 	}
 	closedir DIR;
+	for my $extension (@extensions){
+    printfv(1, "Running extension '%s'", $extension);
+    require $mypath."/putiosync.".$extension.".pl";
+    printfv(1, "Extension '%s' did finish running", $extension);
+	}
 }
 
 sub catchSigInt

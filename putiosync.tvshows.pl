@@ -2,7 +2,6 @@ use TVDB::API;
 use Data::Dumper;
 
 my $tvdb = TVDB::API::new('5EFCC7790F190138');
-our @added_shows = ();
 
 my $pattern_map = {
     '%show%' => 'SeriesName',
@@ -30,15 +29,18 @@ foreach my $task (@{$config->{"tvshows"}}){
     next() if(!$match);
     printfv(0, "-> %s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"});
     moveToLibrary($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"}, $pattern_map, $task->{"overwrite_strategy"});
+    push(@media_added, sprintf("%s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"}));
   }
 }
 
 sub matchFile
 {
   my $file = shift;
-     $file =~ m!(.*)\/([^\/]+)\.([0-9a-z]+)$!gi;
-  my ($path, $filename, $extension) = ($1, $2, $3);
-  
+  my ($path, $filename, $extension);
+  if($file =~ m!(.*)\/([^\/]+)\.([0-9a-z]+)$!gi){
+    ($path, $filename, $extension) = ($1, $2, $3);
+  }
+
   my ($series, $season, $episode) = ("","","");
   
   my $match_filename = $filename;
@@ -65,11 +67,11 @@ sub matchFile
   if($extracted){
     printfv(1, "Looking for '%s' S%02iE%02i...", $series, $season, $episode);
     my $item = undef;
-    $item = $tvdb->getEpisode($series, $season, $episode);
+    $item = $tvdb->getEpisode($series, $season, $episode, 1);
     $series = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
-    $item = $tvdb->getEpisode($series, $season, $episode) if($series);
+    $item = $tvdb->getEpisode($series, $season, $episode, 1) if($series);
     if($item){
-      my $parent = $tvdb->getSeries($series);
+      my $parent = $tvdb->getSeries($series, 1);
       $item->{"file"} = $file;
       $item->{"extension"} = $extension;
       $item->{"path"} = $path;
@@ -81,11 +83,11 @@ sub matchFile
       $item->{"EpisodeNumberLong"} = sprintf("%02i", $item->{"EpisodeNumber"});
       return $item;
     }else{
-      printfv(0, "Could not match '%s' to any known show", $filename);
+      printfvc(0, "Could not match '%s' to any known show", 'red', $filename);
       return undef;
     }
   }else{
-    printfv(0, "Could not guess show name, season and episode number from filename '%s'", $filename);
+    printfvc(0, "Could not guess show name, season and episode number from filename '%s'", 'yellow', $filename);
     return undef;
   }
 }
@@ -95,7 +97,7 @@ sub disambiguateSeriesName
   my $series = shift;
   my $filename = shift;
   
-  my $matches = $tvdb->getPossibleSeriesId($series);
+  my $matches = $tvdb->getPossibleSeriesId($series, 1);
   my $choice = 0;
   return undef if((scalar keys %{$matches}) == 0);
   $choice = 1 if((scalar keys %{$matches}) == 1);

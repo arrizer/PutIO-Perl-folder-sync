@@ -53,6 +53,7 @@ sub filesInFolder
   my $allowed_extensions = shift;
      $allowed_extensions = ['mov', 'avi', 'mp4', 'mpeg4', 'mkv', 'mts', 'ts'] if(!$allowed_extensions);
   my $extensions_regexp = join('|', @{$allowed_extensions});
+  my @files = ();
   opendir DIR, $path.'/'.$subdir;
   foreach my $file (readdir DIR){
     next() if($file =~ m/^\./gi);
