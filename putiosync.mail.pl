@@ -42,7 +42,7 @@ sub _sendMail
 		$mail{'content-type'} = 'text/html; charset="utf-8"';
 	}
 	
-	if (sendmail %mail) {
+	if (sendmail(%mail)) {
 		return 1;
 	}
 	else {
@@ -51,7 +51,7 @@ sub _sendMail
 	}
 }
 
-if($to ne "" scalar(@media_added) > 0 and !$options{"no-mail"}){
+if($to ne "" and scalar(@media_added) > 0 and !$options{"no-mail"}){
 	my @messages = @media_added;
   
 	use Mail::Sendmail;

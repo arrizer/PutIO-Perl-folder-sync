@@ -32,6 +32,7 @@ my @requiredModules = (
   'URI::Escape',
   'Mail::Sendmail',
   'Net::DNS',
+  'Net::Twitter',
 );
 
 if($windows){
