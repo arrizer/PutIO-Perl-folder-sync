@@ -1,3 +1,13 @@
+Version 0.6
+===========
+
+* New feature: Movie folder organizer
+* Series title disambiguation now has a "none of the listed" option
+* Verbose output is printed in blue for easier distinguishment
+* Overwriting of files in the library ignores the file extension
+* Verbose output prints more detailed information
+* Single line output is truncated to terminal width
+
 Version 0.5
 ===========
 
