@@ -29,7 +29,9 @@ my @requiredModules = (
   'WWW::Mechanize',
   'IO::Null',
   'JSON',
-  'URI::Escape'
+  'URI::Escape',
+  'Mail::Sendmail',
+  'Net::DNS',
 );
 
 if($windows){
