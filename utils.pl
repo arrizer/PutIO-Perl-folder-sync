@@ -36,7 +36,7 @@ sub printfvc
   if($string !~ m/\n/gis){
     ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
     $string = substr($string, 0, $wchar);
-    printf("%-".$wchar."s", $string);
+    printf("%-".($wchar-1)."s", $string);
   }else{
     print($string);
   }

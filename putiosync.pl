@@ -15,16 +15,14 @@ use utf8;
 use warnings;
 use strict;
 
-my $windows = $^O =~ /Win32/i;
 $SIG{INT} = \&catchSigInt;
 
-BEGIN {
-	if($windows){
-    require Win32::Console::ANSI;
-		import Win32::Console::ANSI;
-		require Win32::File;
-		import Win32::File;
-	}
+my $windows = $^O =~ /Win32/i;
+if($windows == 1){
+require Win32::Console::ANSI;
+	import Win32::Console::ANSI;
+	require Win32::File;
+	import Win32::File;
 }
 
 my $version = '0.5.1';
@@ -178,8 +176,7 @@ sub downloadFiles
     make_path($file->{"target"});
     make_path($file->{"target_folder"}.'/'.$download_temp_dir);
   	if ($windows){
-      # Disabled this temporarily as it does not compile strict!
-      #Win32::File::SetAttributes($file->{"target_folder"}.'/'.$download_temp_dir, DIRECTORY | HIDDEN);
+      Win32::File::SetAttributes($file->{"target_folder"}.'/'.$download_temp_dir, Win32::File::DIRECTORY() | Win32::File::HIDDEN());
     }
     my $filename = $file->{"target"}."/".$file->{"name"};
     my $temp_filename = $file->{"target_folder"}.'/'.$download_temp_dir.'/'.$file->{"name"};
@@ -314,7 +311,8 @@ sub processCommandLine
     "pid=s",
     "no-color", 
     "imdb-results=i",
-    "no-twitter"
+    "no-twitter",
+    "no-mail"
   );
   GetOptions(\%options, @flags);
   $verbosity = 1 if($options{'v'});
@@ -361,6 +359,7 @@ Options: -v  --verbose          Show more detailed status information
              --no-color         Disables colored output
              --imdb-results <n> Display n suggestions for movies (default is 4)
              --no-twitter       Don't twitter anything
+             --no-mail       	Don't mail anything
 ");
   exit();
 }
