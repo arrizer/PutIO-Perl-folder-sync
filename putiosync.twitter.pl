@@ -16,7 +16,7 @@ if($access_token ne "" and scalar(@media_added) > 0 and !$options{"no-twitter"})
   );
   for my $message (@messages){
     printfv(1, "Tweeting: %s", $message);
-    #$twitter->update($message);
+    $twitter->update($message);
   }
 }else{
   printfv(1, "Nothing to tweet");
