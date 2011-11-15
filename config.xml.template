@@ -60,7 +60,7 @@
       %director% = Movie director
       %genre% = Comma separated list of genres
     -->
-    <filename>%title_sortable% (%year%) %quality% (%audio_tracks%)</filename>
+    <filename>%title_sortable% (%year%)</filename>
     <!-- Same as for <tvshows> -->
     <overwrite_strategy>ask</overwrite_strategy>
   </movies>
@@ -82,7 +82,7 @@
     <!-- 
 		Optional: A mail server to send the mail
 		If none specified it will be detected automatically
-	-->
+  	-->
     <!-- <server>server</server> -->
   </mail>
 </putiosyncconfig>

@@ -311,6 +311,7 @@ sub processCommandLine
     "pid=s",
     "no-color", 
     "imdb-results=i",
+    "tv-shows-ask",
     "no-twitter",
     "no-mail"
   );
@@ -358,8 +359,9 @@ Options: -v  --verbose          Show more detailed status information
              --pid <file>       PID file location (default = ./putiosync.pid)
              --no-color         Disables colored output
              --imdb-results <n> Display n suggestions for movies (default is 4)
+             --tv-shows-ask     Always ask to which TV show a file belongs
              --no-twitter       Don't twitter anything
-             --no-mail       	Don't mail anything
+             --no-mail       	  Don't send any mails
 ");
   exit();
 }

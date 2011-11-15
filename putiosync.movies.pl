@@ -19,11 +19,11 @@ my $pattern_map = {
 foreach my $task (@{$config->{"movies"}}){
   my $inbox = $task->{"inbox"};
   if(!-e $inbox){
-    printfv(0, "The movies organizer inbox folder '%s' does not exist", $inbox);
+    printfvc(0, "The movies organizer inbox folder '%s' does not exist", 'red', $inbox);
     next();
   }
   if(!-e $task->{"path"}){
-    printfv(0, "The movies library folder '%s' does not exist", $task->{"path"});
+    printfvc(0, "The movies library folder '%s' does not exist", 'red', $task->{"path"});
     next();
   }
   

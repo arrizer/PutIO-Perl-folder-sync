@@ -28,8 +28,11 @@ foreach my $task (@{$config->{"tvshows"}}){
     my $match = matchFile($inbox.$file);
     next() if(!$match);
     printfv(0, "-> %s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"});
-    moveToLibrary($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"}, $pattern_map, $task->{"overwrite_strategy"});
-    push(@media_added, sprintf("%s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"}));
+    if(moveToLibrary($match, $task->{"path"}, $task->{"foldername"}, $task->{"filename"}, $pattern_map, $task->{"overwrite_strategy"})){
+      push(@media_added, sprintf("%s S%02iE%02i '%s'", $match->{"SeriesName"}, $match->{"SeasonNumber"}, $match->{"EpisodeNumber"}, $match->{"EpisodeName"}));
+    }else{
+      printfv(0, "Not added to your library");
+    }
   }
 }
 
@@ -65,9 +68,9 @@ sub matchFile
     }
   }
   if($extracted){
-    printfv(1, "Looking for '%s' S%02iE%02i...", $series, $season, $episode);
+    printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode);
     my $item = undef;
-    $item = $tvdb->getEpisode($series, $season, $episode);
+    $item = $tvdb->getEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
     $series = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
     $item = $tvdb->getEpisode($series, $season, $episode) if($series);
     if($item){
@@ -102,7 +105,7 @@ sub disambiguateSeriesName
   return undef if((scalar keys %{$matches}) == 0);
   $choice = 1 if((scalar keys %{$matches}) == 1);
   my @keys = keys(%{$matches});
-  if($choice == 0){
+  if($choice == -1){
     # More than one series matches, ask the user!
     printf("To which series does '%s' belong?\n", $filename);
     printfvc(0, "(0) None of the listed", 'yellow');

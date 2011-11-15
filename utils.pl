@@ -121,9 +121,10 @@ sub moveToLibrary
   $file =~ s/[<>:"\/\\|\?\*]//g;
   
   my @existing = existingFilesInLibrary($target.'/'.$folder, $file);
-  if(scalar(@existing) > 0){
+  if(scalar(@existing) == 1){
+    my $existing = @existing[0];
     my @stat_new = stat($match->{"file"});
-    my @stat_old = stat($destination);
+    my @stat_old = stat($existing);
     if($overwrite_strategy eq "always"){
       printfvc(0, "The file is already in the library and will be overwritten.", 'green');
     }
@@ -147,13 +148,16 @@ sub moveToLibrary
       printfvc(0, "The file is already in the library. Skipping.", 'red');
       return;
     }
+  }elsif(scalar(@existing) > 1){
+    printfvc(0, "More than one similar files are already in the library!", 'red');
   }
   for my $existing (@existing){
-    system("rm ".$existing);
+    unlink($existing) or die('Unable to remove file "'.$existing.'" from library: '.$!);
   }
   my $destination = $target.'/'.$folder.'/'.$file.'.'.$match->{"extension"};
   make_path($target.'/'.$folder.'/');
   rename $match->{"file"}, $destination or die('Unable to move file "'.$match->{"file"}.'" to "'.$destination.'": '.$!);
+  return 1;
 }
 
 sub existingFilesInLibrary
@@ -163,7 +167,7 @@ sub existingFilesInLibrary
   opendir DIR, $folder;
   my @matches = ();
   while(my $file = readdir DIR){
-    if($file =~ m/.*\..*$/gi){
+    if($file =~ m/(.*)\..*$/gi){
       push(@matches, $folder.'/'.$file) if($1 eq $name);
     }
   }
