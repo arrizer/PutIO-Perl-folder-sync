@@ -70,9 +70,9 @@ sub matchFile
   if($extracted){
     printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode);
     my $item = undef;
-    $item = $tvdb->getEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
-    $series = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
-    $item = $tvdb->getEpisode($series, $season, $episode) if($series);
+    $item = $tvdb->getEpisode($series, $season, $episode, 1) if(!$options{"tv-shows-ask"});
+    $series = disambiguateSeriesName($series, $filename, 1) if(!$item and !$options{"n"});
+    $item = $tvdb->getEpisode($series, $season, $episode, 1) if($series);
     if($item){
       my $parent = $tvdb->getSeries($series, 1);
       $item->{"file"} = $file;
@@ -100,7 +100,7 @@ sub disambiguateSeriesName
   my $series = shift;
   my $filename = shift;
   
-  my $matches = $tvdb->getPossibleSeriesId($series);
+  my $matches = $tvdb->getPossibleSeriesId($series, 1);
   my $choice = -1;
   return undef if((scalar keys %{$matches}) == 0);
   $choice = 1 if((scalar keys %{$matches}) == 1);
