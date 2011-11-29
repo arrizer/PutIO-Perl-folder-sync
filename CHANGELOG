@@ -7,6 +7,7 @@ Version 0.6
 * Overwriting of files in the library ignores the file extension
 * Verbose output prints more detailed information
 * Single line output is truncated to terminal width
+* Single instance check via PID file
 
 Version 0.5
 ===========

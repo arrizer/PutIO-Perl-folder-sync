@@ -175,4 +175,41 @@ sub existingFilesInLibrary
   return @matches;
 }
 
+sub pidBegin
+{
+  my $pidfile = shift;
+  #die $pidfile;
+	my $override = shift or 0;
+	# Check if another instance of the process is already running
+	if(-e $pidfile){
+		open PIDFILE, "<".$pidfile;
+		my $pid = <PIDFILE>;
+		close PIDFILE;
+		# Paw the other process to see if it moves
+		my $exists = kill 0, $pid;
+		return $pid if(!$override and $exists);
+		if($override and $exists){
+		  # It's alive! Kill it!
+			my $res = kill 15, $pid;
+			if($res eq 1){
+				printfvc(0, "Terminated other instances process!", 'green bold');
+			}else{
+				printfvc(0, "Could not terminate other instance!", 'red bold');
+				return $pid;
+			}
+		}
+	}
+	open PIDFILE, ">".$pidfile;
+	print PIDFILE $$;
+	close PIDFILE;
+	return 0;
+}
+
+sub pidFinish
+{
+  my $pidfile = shift;
+	unlink $pidfile;
+}
+
+
 1;

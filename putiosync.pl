@@ -16,6 +16,7 @@ use warnings;
 use strict;
 
 $SIG{INT} = \&catchSigInt;
+$SIG{TERM} = \&catchSigInt;
 
 my $windows = $^O =~ /Win32/i;
 if($windows == 1){
@@ -25,18 +26,25 @@ require Win32::Console::ANSI;
 	import Win32::File;
 }
 
-my $version = '0.5.1';
+my $version = '0.6';
 our $mypath = abs_path(File::Basename::dirname(__FILE__));
 our $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
 my $config_file = $mypath."/config.xml";
 my $download_temp_dir = ".putiosync-downloading";
-my $pid_file = "./putiosync.pid";
+my $pid_file = $mypath."/.putiosync.pid";
 
 require $mypath.'/utils.pl';
 
 # Process command line flags
 our %options = ();
 processCommandLine();
+
+# Ensure monogamy
+my $otherPid = pidBegin($pid_file, $options{"override"});
+if($otherPid != 0){
+  printfvc(0, "Another instance of $0 is running (process ID $otherPid). Terminating!\n(User --override to terminate the other process)", 'red');
+  exit();
+}
 
 # Read config XML
 our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
@@ -55,6 +63,7 @@ if(!$options{'no-sync'}){
   downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
 }
 runExtensions() if(!$options{'no-extensions'});
+pidFinish($pid_file);
 exit();
 
 
@@ -307,6 +316,7 @@ sub processCommandLine
     "dry", 
     "no-extensions", 
     "n|non-interactive", 
+    "override",
     "no-resume", 
     "pid=s",
     "no-color", 
@@ -349,6 +359,7 @@ Options: -v  --verbose          Show more detailed status information
          -q  --quiet            No output whatsoever
          -h  --help             Show this help screen and exit
          -n  --non-interactive  Don't ask anything
+             --override         Terminate other instances of the script
              --config <file>    Use specific config file (default is config.xml)
              --dry              Dry run (nothing is downloaded, moved or changed)
              --no-sync          Skip syncing (only run extension scripts)
@@ -385,5 +396,6 @@ sub runExtensions
 sub catchSigInt
 {
   printfvc(0, "Catched termination signal", 'red bold');
+  pidFinish($pid_file);
   exit();
 }
