@@ -379,13 +379,7 @@ Options: -v  --verbose          Show more detailed status information
 
 sub runExtensions
 {
-  opendir DIR, $mypath;
-  my @extensions = ();
-  while (my $file = readdir(DIR)) {
-    next() if ($file !~ m/^putiosync\.(.*?)\.pl$/gi);
-    push(@extensions, $1);
-	}
-	closedir DIR;
+  my @extensions = ('tvshows', 'movies', 'twitter', 'mail');
 	for my $extension (@extensions){
     printfv(1, "Running extension '%s'", $extension);
     require $mypath."/putiosync.".$extension.".pl";
@@ -395,7 +389,7 @@ sub runExtensions
 
 sub catchSigInt
 {
-  printfvc(0, "Catched termination signal", 'red bold');
+  printfvc(0, "\nCatched termination signal", 'red bold');
   pidFinish($pid_file);
   exit();
 }

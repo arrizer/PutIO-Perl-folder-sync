@@ -1,7 +1,6 @@
-use TVDB::API;
 use Data::Dumper;
 
-my $tvdb = TVDB::API::new('5EFCC7790F190138');
+require $mypath.'/thetvdb.pl';
 
 my $pattern_map = {
     '%show%' => 'SeriesName',
@@ -70,11 +69,12 @@ sub matchFile
   if($extracted){
     printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode);
     my $item = undef;
-    $item = $tvdb->getEpisode($series, $season, $episode, 1) if(!$options{"tv-shows-ask"});
-    $series = disambiguateSeriesName($series, $filename, 1) if(!$item and !$options{"n"});
-    $item = $tvdb->getEpisode($series, $season, $episode, 1) if($series);
+    $item = tvdbEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
+    my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
+    $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
+    
     if($item){
-      my $parent = $tvdb->getSeries($series, 1);
+      my $parent = tvdbSeriesId($item->{"seriesid"});
       $item->{"file"} = $file;
       $item->{"extension"} = $extension;
       $item->{"path"} = $path;
@@ -100,20 +100,19 @@ sub disambiguateSeriesName
   my $series = shift;
   my $filename = shift;
   
-  my $matches = $tvdb->getPossibleSeriesId($series, 1);
+  my $matches = tvdbSearch($series);
+  my @matches = @$matches;
   my $choice = -1;
-  return undef if((scalar keys %{$matches}) == 0);
-  $choice = 1 if((scalar keys %{$matches}) == 1);
-  my @keys = keys(%{$matches});
+  return undef if((scalar @matches) == 0);
+  $choice = 1 if((scalar @matches) == 1);
   if($choice == -1){
     # More than one series matches, ask the user!
     printf("To which series does '%s' belong?\n", $filename);
     printfvc(0, "(0) None of the listed", 'yellow');
     my $cnt = 0;
-    foreach my $key (@keys){
+    foreach my $match (@matches){
       $cnt++;
-      my $match = $matches->{$key};
-      printf("(%i) %s\n", $cnt, $match->{"SeriesName"});
+      printf("(%i) %s\n", $cnt, $match->{"seriesid"});
     }
   }
   
@@ -122,7 +121,7 @@ sub disambiguateSeriesName
     $choice = <STDIN>;
   }
   if($choice > 0){
-    return $matches->{@keys[$choice - 1]}->{"SeriesName"};
+    return @matches[$choice - 1]->{"SeriesName"};
   }else{
     return undef;
   }

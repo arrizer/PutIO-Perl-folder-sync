@@ -24,7 +24,6 @@ my @requiredModules = (
   'LWP::Protocol::https',
   'XML::Simple',
   'File::Path',
-  'TVDB::API',
   'Term::ReadKey',
   'WWW::Mechanize',
   'IO::Null',
