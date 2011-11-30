@@ -29,14 +29,8 @@ sub _sendMail
 		 'body' => $body
 	);
 	
-	if ($server)
-	{
-		$mail{'server'} = $server;
-	}
-	else
-	{
-		$mail{'server'} = _getMailMx($to);
-	}	
+	$mail{'server'} = ($server) ? $server : _getMailMx($to);
+	
 	if ($is_html)
 	{
 		$mail{'content-type'} = 'text/html; charset="utf-8"';
@@ -51,23 +45,24 @@ sub _sendMail
 	}
 }
 
-if($to ne "" and scalar(@media_added) > 0 and !$options{"no-mail"}){
-	my @messages = @media_added;
-  
-	use Mail::Sendmail;
-	use Net::DNS;
-	
-	my $downloaded = join("\n",@messages);
-	
-	;
+if (!$options{"no-mail"})
+{
+	if($to ne "" and scalar(@media_added) > 0){
+		my @messages = @media_added;
+	  
+		use Mail::Sendmail;
+		use Net::DNS;
+		
+		my $downloaded = join("\n",@messages);
 
-	if (_sendMail($from,$to,$subject,$downloaded,$server,0))
-	{
-	    printfv(1, "Mail sent to: ", $to);
-	}
-	else
-	{
-		printfv(1, "Error sending mail.");
+		if (_sendMail($from,$to,$subject,$downloaded,$server,0))
+		{
+		   	printfv(1, "Error sending mail to: %s",$to);
+		}
+		else
+		{
+		   	printfvc(0, "Error sending mail to: %s", 'red', $to);
+		}
 	}
 }
 
