@@ -47,9 +47,10 @@ sub matchFile
   
   my $match_filename = $filename;
   $match_filename =~ s/\./ /gi;
-  my @extractors = ('(.*)\s*S\s*([0-9]+)\s*E([0-9]+)\s*(.*)$', 
+  my @extractors = ('(.*)\s*S\s*([0-9]+)\s*E([0-9]+)\s*(.*)$',          #Format: S03E05
                     '(.*)\s*\s*[^0-9]+([0-9]+)\s*[xX]([0-9]+)\s*(.*)$', #Fornat: NAME 03x01
-                    '(.*)\s*\s*([0-9]{1,2})\s*([0-9]{2})\s*(.*)$', ); #Format: NAME 102 => S01E02
+                    '(.*)\s*\s*([0-9]{1,2})\s*([0-9]{2})\s*(.*)$',      #Format: NAME 102 => S01E02
+                    '(.*)\s*Season\s*([0-9]+)\s*Episode([0-9]+)\s*(.*)$');  #Format: Season 03 Episode 05
   my $extracted = 0;
   foreach my $regexp (@extractors){
     $match_filename =~ m/$regexp/gi;
