@@ -68,13 +68,41 @@ sub matchFile
       last;
     }
   }
+  my $dateExtracted = 0;
+  my $date_match_filename = $filename;
+  
+  my ($year, $month, $day) = (0,0,0);
+  #if(!$extracted) {
+    printfv(0, "Searching for date in: %s",$date_match_filename);
+    my $dateExtractor = '(.*)\.([0-9]{4})\.([0-9]{2})\.([0-9]{2})\.(.*)$';
+    if ($date_match_filename =~ m/$dateExtractor/gi) {
+      $series = $1;
+      
+      $year = scalar $2;
+      $month = scalar $3;
+      $day = scalar $4;
+      
+      $series =~ s/\./ /gi;
+      $dateExtracted = 1;
+      $extracted = 1;
+      printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $series, $year, $month, $day);
+    }
+  #}
   if($extracted){
-    printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode);
+    printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode) unless $dateExtracted;
+    printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $series, $year, $month, $day) if $dateExtracted;
     my $item = undef;
-    $item = tvdbEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
-    my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
-    $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
-    
+    if ($dateExtracted) {
+      $item = tvdbEpisodeForDate($series, $year, $month, $day) if(!$options{"tv-shows-ask"});
+      my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
+      printfv(1, 'Series ID for %s: %s', $series, $seriesId);
+      $item = tvdbEpisodeForDateId($seriesId, $year, $month, $day) if($seriesId);
+    } else {
+      $item = tvdbEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
+      my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
+      $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
+    }
+    printfv(1,"Item Hash Content: %s",Dumper $item);
     if($item){
       my $parent = tvdbSeriesId($item->{"seriesid"});
       $item->{"file"} = $file;
@@ -114,7 +142,7 @@ sub disambiguateSeriesName
     my $cnt = 0;
     foreach my $match (@matches){
       $cnt++;
-      printf("(%i) %s\n", $cnt, $match->{"seriesid"});
+      printf("(%i) %s\n", $cnt, $match->{"SeriesName"});
     }
   }
   
@@ -123,7 +151,7 @@ sub disambiguateSeriesName
     $choice = <STDIN>;
   }
   if($choice > 0){
-    return @matches[$choice - 1]->{"SeriesName"};
+    return @matches[$choice - 1]->{"seriesid"};
   }else{
     return undef;
   }
