@@ -25,6 +25,37 @@ sub tvdbEpisode
   return tvdbEpisodeId($seriesId, $season, $episode);
 }
 
+sub tvdbEpisodeForDate
+{
+  my $seriesName = shift;
+  my $year = shift;
+  my $month = shift;
+  my $day = shift;
+  printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $seriesName, $year, $month, $day);
+  my $matches = tvdbSearch($seriesName);
+  my @matches = @$matches;
+  printfv(1, "First Series Name found: %s", @matches[0]->{"seriesid"});
+  return undef if (scalar @matches <= 0);
+  my $seriesId = @matches[0]->{"seriesid"};
+  my $data = _xmlRequest('GetEpisodeByAirDate.php?apikey='.$api_key.'&seriesid='.$seriesId.'&airdate='.$day."-".$month."-".$year);
+  return $data->{"Episode"};
+}
+
+sub tvdbEpisodeForDateId
+{
+  my $seriesId = shift;
+  my $year = shift;
+  my $month = shift;
+  my $day = shift;
+  printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $seriesId, $year, $month, $day);
+  
+  my $data = _xmlRequest('GetEpisodeByAirDate.php?apikey='.$api_key.'&seriesid='.$seriesId.'&airdate='.$day."-".$month."-".$year);
+  return undef if(!$data);
+  my $xml = XMLin($data);
+  printfv(1, "Episode for Date Id %s", Dumper $xml);
+  return $xml->{"Episode"};
+}
+
 sub tvdbEpisodeId
 {
   my $seriesId = shift;
