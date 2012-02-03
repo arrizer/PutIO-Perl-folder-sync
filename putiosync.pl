@@ -42,7 +42,7 @@ processCommandLine();
 # Ensure monogamy
 my $otherPid = pidBegin($pid_file, $options{"override"});
 if($otherPid != 0){
-  printfvc(0, "Another instance of $0 is running (process ID $otherPid). Terminating!\n(Use --override to terminate the other process)", 'red');
+  printfvc(0, "Another instance of $0 is running (process ID $otherPid). Giving up!\n(Use --override to terminate the other process)", 'red');
   exit();
 }
 
@@ -389,7 +389,7 @@ sub runExtensions
 
 sub catchSigInt
 {
-  printfvc(0, "\nCatched termination signal", 'red bold');
+  printfvc(0, "\nCaught termination signal", 'red bold');
   pidFinish($pid_file);
   exit();
 }
