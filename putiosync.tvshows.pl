@@ -47,15 +47,17 @@ sub matchFile
   
   my $match_filename = $filename;
   $match_filename =~ s/\./ /gi;
-  my @extractors = ('(.*)\s*S\s*([0-9]+)\s*E([0-9]+)\s*(.*)$', 
+  my @extractors = ('(.*)\s*S\s*([0-9]+)\s*E([0-9]+)\s*(.*)$',          #Format: S03E05
                     '(.*)\s*\s*[^0-9]+([0-9]+)\s*[xX]([0-9]+)\s*(.*)$', #Fornat: NAME 03x01
-                    '(.*?)\s*([0-9]{1,2})\s*([0-9]{2})\s*(.*)$', ); #Format: NAME 102 => S01E02
+                    '(.*)\s*\s*([0-9]{1,2})\s*([0-9]{2})\s*(.*)$',      #Format: NAME 102 => S01E02
+                    '(.*)\s*Season\s*([0-9]+)\s*Episode\s*([0-9]+)\s*(.*)$');  #Format: Season 03 Episode 05
   my $extracted = 0;
   foreach my $regexp (@extractors){
-    $match_filename =~ m/$regexp/gi;
-    $series = $1;
-    $season = scalar $2;
-    $episode = scalar $3;
+    if($match_filename =~ m/$regexp/gi){     
+      $series = $1;
+      $season = scalar $2;
+      $episode = scalar $3;
+    }
     $series =~ s/(^\s+|\s$)//gi;
     $series =~ s/,_/ /gi;
     #$series =~ s/20\d{2}//gi; #remove year
@@ -66,13 +68,37 @@ sub matchFile
       last;
     }
   }
+  my $dateExtracted = 0;
+  my $date_match_filename = $filename;
+  
+  my ($year, $month, $day) = (0,0,0);
   if($extracted){
-    printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode);
+  
+    #Cheching for date
+    my $dateExtractor = '(.*)\.([0-9]{4})\.([0-9]{2})\.([0-9]{2})\.(.*)$';
+    if ($date_match_filename =~ m/$dateExtractor/gi) {
+      $series = $1;
+      
+      $year = scalar $2;
+      $month = scalar $3;
+      $day = scalar $4;
+      
+      $series =~ s/\./ /gi;
+      $dateExtracted = 1;
+    }  
+    printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode) unless $dateExtracted;
+    printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $series, $year, $month, $day) if $dateExtracted;
     my $item = undef;
-    $item = tvdbEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
-    my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
-    $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
-    
+    if ($dateExtracted) {
+      $item = tvdbEpisodeForDate($series, $year, $month, $day) if(!$options{"tv-shows-ask"});
+      my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
+      printfv(1, 'Series ID for %s: %s', $series, $seriesId);
+      $item = tvdbEpisodeForDateId($seriesId, $year, $month, $day) if($seriesId);
+    } else {
+      $item = tvdbEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
+      my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
+      $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
+    }
     if($item){
       my $parent = tvdbSeriesId($item->{"seriesid"});
       $item->{"file"} = $file;
@@ -112,7 +138,7 @@ sub disambiguateSeriesName
     my $cnt = 0;
     foreach my $match (@matches){
       $cnt++;
-      printf("(%i) %s\n", $cnt, $match->{"seriesid"} . " " . $match->{"SeriesName"});
+      printf("(%i) %s\n", $cnt, $match->{"SeriesName"});
     }
   }
   
@@ -121,7 +147,7 @@ sub disambiguateSeriesName
     $choice = <STDIN>;
   }
   if($choice > 0){
-    return @matches[$choice - 1]->{"SeriesName"};
+    return @matches[$choice - 1]->{"seriesid"};
   }else{
     return undef;
   }
