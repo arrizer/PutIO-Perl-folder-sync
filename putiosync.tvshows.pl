@@ -58,7 +58,7 @@ sub matchFile
     $episode = scalar $3;
     $series =~ s/(^\s+|\s$)//gi;
     $series =~ s/,_/ /gi;
-    $series =~ s/20\d{2}//gi; #remove year
+    #$series =~ s/20\d{2}//gi; #remove year
     #$series =~ s/(the|der|die|das|les|le|la)//gi;
 	#printfv(0, "# %s S%02iE%02i", $series, $season, $episode);
     if($series =~ m/\S+/ and $season =~ m/^[0-9]+$/ and $episode =~ m/^[0-9]+$/ and $season > 0 and $episode > 0){
@@ -112,7 +112,7 @@ sub disambiguateSeriesName
     my $cnt = 0;
     foreach my $match (@matches){
       $cnt++;
-      printf("(%i) %s\n", $cnt, $match->{"seriesid"});
+      printf("(%i) %s\n", $cnt, $match->{"seriesid"} . " " . $match->{"SeriesName"});
     }
   }
   
