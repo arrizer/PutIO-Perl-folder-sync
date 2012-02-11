@@ -139,9 +139,9 @@ sub moveToLibrary
     }
     elsif($overwrite_strategy eq "bigger"){
       if(@stat_new[7] > @stat_old[7]){
-        printvc(0, "A smaller file is already present in the library and will be overwritten.", 'green');
+        printfvc(0, "A smaller file is already present in the library and will be overwritten.", 'green');
       }else{
-        printvc(0, "A bigger or equally sized file is already present in the library. Skipping.", 'red');
+        printfvc(0, "A bigger or equally sized file is already present in the library. Skipping.", 'red');
         return;
       }
     }else{ #aka 'never'
