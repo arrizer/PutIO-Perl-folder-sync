@@ -95,9 +95,22 @@ sub matchFile
       printfv(1, 'Series ID for %s: %s', $series, $seriesId);
       $item = tvdbEpisodeForDateId($seriesId, $year, $month, $day) if($seriesId);
     } else {
-      $item = tvdbEpisode($series, $season, $episode) if(!$options{"tv-shows-ask"});
-      my $seriesId = disambiguateSeriesName($series, $filename) if(!$item and !$options{"n"});
-      $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
+		#Trying with year and without year, if name has year init
+		my @names = ();
+		push(@names,$series);
+		$series =~ s/20\d{2}//gi; #remove year
+		if (!grep( /^$series$/, @names )){
+			push(@names,$series);
+		}
+		foreach my $name (@names){
+			printfvc(1, "Trying: $name","blue");
+			  $item = tvdbEpisode($name, $season, $episode) if(!$options{"tv-shows-ask"});
+			  my $seriesId = disambiguateSeriesName($name, $filename) if(!$item and !$options{"n"});
+			  $item = tvdbEpisodeId($seriesId, $season, $episode) if($seriesId);
+			  if ($item) {
+				last;
+			  }
+		}
     }
     if($item){
       my $parent = tvdbSeriesId($item->{"seriesid"});
