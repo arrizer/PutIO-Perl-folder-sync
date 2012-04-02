@@ -51,7 +51,7 @@ sub filesInFolder
   my $subdir = shift or "";
   my $recursive = shift or 1;
   my $allowed_extensions = shift;
-     $allowed_extensions = ['mov', 'avi', 'mp4', 'mpeg4', 'mkv', 'mts', 'ts'] if(!$allowed_extensions);
+     $allowed_extensions = ['mov', 'avi', 'mp4', 'mpeg4', 'mkv', 'mts', 'ts', '3gp'] if(!$allowed_extensions);
   my $extensions_regexp = join('|', @{$allowed_extensions});
   my @files = ();
   opendir DIR, $path.'/'.$subdir;
