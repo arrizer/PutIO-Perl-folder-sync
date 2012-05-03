@@ -53,7 +53,7 @@ our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
 my $agent = LWP::UserAgent->new();
    $agent->add_handler(request_prepare => \&prepareRequest);
    $agent->add_handler(response_header => \&didReceiveResponse);
-   $agent->credentials("put.io:80", "Put.io File Space", $config->{"account_name"}, $config->{"account_password"});
+   $agent->credentials("put.io:80", "Login Required", $config->{"account_name"}, $config->{"account_password"});
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
 
