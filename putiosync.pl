@@ -53,7 +53,7 @@ our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
 my $agent = LWP::UserAgent->new();
    $agent->add_handler(request_prepare => \&prepareRequest);
    $agent->add_handler(response_header => \&didReceiveResponse);
-   $agent->credentials("put.io:80", "Login Required", $config->{"account_name"}, $config->{"account_password"});
+   $agent->credentials("put.io", "Login Required", $config->{"account_name"}, $config->{"account_password"});
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
 
@@ -226,6 +226,11 @@ sub downloadFile
   open DOWNLOAD, ($byte_offset > 0) ? ">>" : ">", $temp_filename or die "Unable to create download file: $!";
   binmode DOWNLOAD;
   $last_tick = time();
+  my $host = "put.io";
+  if($url =~ m/http:\/\/(.*?)\//gi){
+	$host = $1;
+  }
+  $agent->credentials($host.":80", "Login Required", $config->{"account_name"}, $config->{"account_password"});
   my $response = $agent->get($url, ':read_size_hint' => (2 ** 14), ':content_cb' => \&didReceiveData);
   close DOWNLOAD;
   my @stat = stat($temp_filename);
