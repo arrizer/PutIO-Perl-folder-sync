@@ -48,27 +48,12 @@ if($otherPid != 0){
 
 # Read config XML
 our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
-BEGIN { $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0 } #Ignore invalid ssl cert
+
 # Initialise HTTP and putio clients
 my $agent = LWP::UserAgent->new();
    $agent->add_handler(request_prepare => \&prepareRequest);
    $agent->add_handler(response_header => \&didReceiveResponse);
-   #$agent->credentials("put.io:80", "Login Required", $config->{"account_name"}, $config->{"account_password"});
-   {
-   package My::LWP::UserAgent;
-   our @ISA = qw/LWP::UserAgent/;
-   sub get_basic_credentials {
-		my ($agent, $realm, $uri, $isproxy) = @_;
-		if ($uri =~ m/http:\/\/[^\/]*\.put\.io\/.*/)
-		{
-			return ( $config->{"account_name"}, $config->{"account_password"} );
-		}
-   };
-
-   # ... and rebless $agent into current package
-   $agent = bless $agent;
-}
-
+   $agent->credentials("put.io", "Login Required", $config->{"account_name"}, $config->{"account_password"});
 my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
                                           'api_secret' => $config->{"api_secret"});
 
@@ -197,7 +182,6 @@ sub downloadFiles
     $cnt++;
     printfv(0, "Fetching '%s' [%i of %i]", $file->{"name"}, $cnt, $#downloadQueue + 1);
     my $url = $file->{"download_url"};
-	printfv(0,"File: $url");
     make_path($file->{"target"});
     make_path($file->{"target_folder"}.'/'.$download_temp_dir);
   	if ($windows){
@@ -242,6 +226,11 @@ sub downloadFile
   open DOWNLOAD, ($byte_offset > 0) ? ">>" : ">", $temp_filename or die "Unable to create download file: $!";
   binmode DOWNLOAD;
   $last_tick = time();
+  my $host = "put.io";
+  if($url =~ m/http:\/\/(.*?)\//gi){
+	$host = $1;
+  }
+  $agent->credentials($host.":80", "Login Required", $config->{"account_name"}, $config->{"account_password"});
   my $response = $agent->get($url, ':read_size_hint' => (2 ** 14), ':content_cb' => \&didReceiveData);
   close DOWNLOAD;
   my @stat = stat($temp_filename);
