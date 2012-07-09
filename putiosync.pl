@@ -142,6 +142,7 @@ sub queuePutIoFolder
         printfv(1, "File '%s' exists but has a different size. Will be redownloaded", $file->{"name"});
       }
     }
+	$target =~ s/\s\//\//gi; #Remove whitespace before slash, otherwise subfolders will fail
     $file->{"target"} = $target;
     push(@queue, $file);
   }
