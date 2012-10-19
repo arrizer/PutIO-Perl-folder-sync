@@ -5,8 +5,8 @@
   <api_secret>myapisecret</api_secret>
 
   <!-- This is your put.io account name and password used for downloading via https -->
-  <account_name>foobar@example.com</account_name>
-  <account_password>mypassword</account_password>
+  <account_name>username</account_name>
+  <account_password>yourpassword</account_password>
   
   <!-- Add a <sync> tag for each remote folder that should be synced -->
   <sync>
@@ -19,70 +19,4 @@
     <!-- Set to 'true' to delete downloads from put.io after successful download -->
     <delete>false</delete>
   </sync>
-  
-  <!-- Add a <tvshows> tag for each folder with tv shows to organize -->  
-  <tvshows>
-    <!-- All media files in this folder will be moved to the <path> folder -->
-    <inbox>/path/to/my/inbox</inbox>
-    <!-- Root folder of your tv shows media directory -->
-    <path>/path/to/my/tvshows</path>
-    <!-- Sort structure of the tv shows media directory -->
-    <foldername>/%show_sortable%/Season %season%/</foldername>
-    <filename>%show% S%season%E%episode% %title%</filename>
-    <!-- 
-      Available placeholders for <foldername> and <filename> are: 
-      %show% = Title of the show
-      %show_sortable% = Title of the show optimized for alphabetical sorting
-      %season% = Season number (two digits)
-      %epsiode% = Episode number (two digits)
-      %title% = Title of the episode
-    -->
-    
-    <!-- What to do if an episode is already in the library:
-          never = Never overwrite data in the library (default if tag is not present)
-          always = Always use the new file
-          ask = Ask each time
-          bigger = Overwrite if the income file is bigger in size (<-> has better quality)
-     -->
-    <overwrite_strategy>ask</overwrite_strategy>
-  </tvshows>
-  
-  <movies>
-    <!-- All media files in this folder will be moved to the <path> folder -->
-    <inbox>/path/to/my/movies-inbox</inbox>
-    <!-- Folder of your movies directory -->
-    <path>/path/to/my/movies</path>
-    <!-- 
-      Available placeholders for <filename> are: 
-      %title% = Title of the movie
-      %title_sortable% = Title of the movie optimized for alphabetical sorting
-      %year% = Release year of the movie
-      %director% = Movie director
-      %genre% = Comma separated list of genres
-    -->
-    <filename>%title_sortable% (%year%)</filename>
-    <!-- Same as for <tvshows> -->
-    <overwrite_strategy>ask</overwrite_strategy>
-  </movies>
-  
-  <twitter>
-    <!-- Access token for your twitter account -->
-    <access_token>123456789</access_token>
-    <!-- Access token secret for your twitter account -->
-    <secret>123456789</secret>
-  </twitter>
-  
-  <mail>
-    <!-- From mail address -->
-    <from>PutIO Sync &lt;putiosync@github.com&gt;</from>
-    <!-- To mail address -->
-    <to>your.name@domain.com</to>
-    <!-- Mail subject -->
-	<subject>PutIO Synced</subject>
-    <!-- 
-		Optional: A mail server to send the mail
-		If none specified it will be detected automatically
-  	-->
-    <!-- <server>server</server> -->
-  </mail>
 </putiosyncconfig>

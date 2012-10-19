@@ -1,5 +1,9 @@
 #!/usr/bin/env perl
-$| = 1; # Disable output caching
+$| = 1; # Disable output buffering
+
+use utf8;
+use warnings;
+use strict;
 
 use WebService::PutIo::Files;
 use Getopt::Long;
@@ -11,9 +15,6 @@ use File::Basename;
 use Term::ANSIColor;
 use Term::ReadKey;
 use Cwd 'abs_path';
-use utf8;
-use warnings;
-use strict;
 
 $SIG{INT} = \&catchSigInt;
 $SIG{TERM} = \&catchSigInt;
@@ -26,20 +27,18 @@ require Win32::Console::ANSI;
 	import Win32::File;
 }
 
-my $version = '0.6';
+my $version = '0.7';
 our $mypath = abs_path(File::Basename::dirname(__FILE__));
 our $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
 my $config_file = $mypath."/config.xml";
 my $download_temp_dir = ".putiosync-downloading";
 my $pid_file = $mypath."/.putiosync.pid";
 
-require $mypath.'/utils.pl';
-
 # Process command line flags
 our %options = ();
 processCommandLine();
 
-# Ensure monogamy
+# Make sure the script is not executed twice
 my $otherPid = pidBegin($pid_file, $options{"override"});
 if($otherPid != 0){
   printfvc(0, "Another instance of $0 is running (process ID $otherPid). Giving up!\n(Use --override to terminate the other process)", 'red');
@@ -47,7 +46,7 @@ if($otherPid != 0){
 }
 
 # Read config XML
-our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
+our $config = XMLin($config_file, ForceArray => ['sync']);
 
 # Initialise HTTP and putio clients
 my $agent = LWP::UserAgent->new();
@@ -62,7 +61,7 @@ if(!$options{'no-sync'}){
   my @downloadQueue = queueSyncItems();
   downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
 }
-runExtensions() if(!$options{'no-extensions'});
+#runExtensions() if(!$options{'no-extensions'});
 pidFinish($pid_file);
 exit();
 
@@ -86,9 +85,9 @@ sub queueSyncItems
     my $recursive = $sync_item->{"recursive"} eq 'true';
     my $delete_source = $sync_item->{"delete"} eq 'true';
     $source =~ s/(^\/|\/$)//gi; # Trim leading and trailing slashes from the source path
-    printfvc(0, "Syncing folder '%s' to '%s'...", 'yellow', $source, $target);
+    printfvc(0, "Syncing put.io folder '%s' to '%s'...", 'yellow', $source, $target);
     if (!(-d $target)) {
-    	printfvc(0, "The target folder '%s' does not exist!", 'red', $target);
+      printfvc(0, "The local folder '%s' does not exist!", 'red', $target);
       next();
     }
     my @newQueue = queuePutIoFolderPath($source, $target, $recursive);
@@ -98,7 +97,7 @@ sub queueSyncItems
     }
     push(@downloadQueue, @newQueue);
   }
-  printfv(0, "%s files queued to download", $#downloadQueue == -1 ? "No" : ($#downloadQueue + 1));
+  printfvc(0, "%s files queued to download", 'yellow', $#downloadQueue == -1 ? "No" : ($#downloadQueue + 1));
   foreach my $file (@downloadQueue){
     printfvc(0, "%s", 'cyan', $file->{"name"});
   }  
@@ -306,7 +305,6 @@ sub processCommandLine
   $options{"config"} = "";
   $options{"no-sync"} = 0;
   $options{"dry"} = 0;
-  $options{"no-extensions"} = 0;
   $options{"n"} = 0;
   $options{"no-resume"} = 0;
   $options{"pid"} = "";
@@ -319,7 +317,6 @@ sub processCommandLine
     "config=s", 
     "no-sync", 
     "dry", 
-    "no-extensions", 
     "n|non-interactive", 
     "override",
     "no-resume", 
@@ -368,7 +365,6 @@ Options: -v  --verbose          Show more detailed status information
              --config <file>    Use specific config file (default is config.xml)
              --dry              Dry run (nothing is downloaded, moved or changed)
              --no-sync          Skip syncing (only run extension scripts)
-             --no-extensions    Don't run any extension scripts after sycning
              --no-delete        Never delete files from put.io
              --no-resume        Redownload partially received files instead of
                                 resuming the download
@@ -382,19 +378,83 @@ Options: -v  --verbose          Show more detailed status information
   exit();
 }
 
-sub runExtensions
-{
-  my @extensions = ('tvshows', 'twitter', 'mail');
-	for my $extension (@extensions){
-    printfv(1, "Running extension '%s'", $extension);
-    require $mypath."/putiosync.".$extension.".pl";
-    printfv(1, "Extension '%s' did finish running", $extension);
-	}
-}
-
 sub catchSigInt
 {
   printfvc(0, "\nCaught termination signal", 'red bold');
   pidFinish($pid_file);
   exit();
+}
+
+sub fsize
+{
+  my $size = shift; 
+  return sprintf("%.1f GiB", $size / (1024 ** 3)) if($size > (1024 ** 3));
+  return sprintf("%.1f MiB", $size / (1024 ** 2)) if($size > (1024 ** 2));
+  return sprintf("%.1f kiB", $size / (1024 ** 1)) if($size > (1024 ** 1));
+  return sprintf("%.0f Bytes", $size);
+}
+
+sub fduration
+{
+  my $seconds = shift;
+  return sprintf("%.0f days", $seconds / (60 * 60 * 24)) if($seconds >= 60 * 60 * 24);
+  return sprintf("%.0f hours", $seconds / (60 * 60)) if($seconds >= 60 * 60);
+  return sprintf("%.0f minutes", $seconds / (60)) if($seconds >= 60);
+  return sprintf("%.0f seconds", $seconds) if($seconds < 60);
+  return sprintf("a few seconds", $seconds) if($seconds < 7);
+}
+
+sub printfv
+{
+  my ($level, $format, @parameters) = @_;
+  printfvc($level, $format, $level >= 1 ? 'blue' : '', @parameters);
+}
+
+sub printfvc
+{
+  # Prints a colored line
+  my ($level, $format, $color, @parameters) = @_;
+  
+  return if($level > $verbosity);
+  print color $color if($color ne '');
+  my $string = sprintf($format, @parameters);
+  print($string);  
+  print color 'reset';
+  print("\n");
+}
+
+sub pidBegin
+{
+  my $pidfile = shift;
+  #die $pidfile;
+	my $override = shift or 0;
+	# Check if another instance of the process is already running
+	if(-e $pidfile){
+		open PIDFILE, "<".$pidfile;
+		my $pid = <PIDFILE>;
+		close PIDFILE;
+		# Paw the other process to see if it moves
+		my $exists = kill 0, $pid;
+		return $pid if(!$override and $exists);
+		if($override and $exists){
+		  # It's alive! Kill it!
+			my $res = kill 15, $pid;
+			if($res eq 1){
+				printfvc(0, "Terminated other instances process!", 'green bold');
+			}else{
+				printfvc(0, "Could not terminate other instance!", 'red bold');
+				return $pid;
+			}
+		}
+	}
+	open PIDFILE, ">".$pidfile;
+	print PIDFILE $$;
+	close PIDFILE;
+	return 0;
+}
+
+sub pidFinish
+{
+  my $pidfile = shift;
+	unlink $pidfile;
 }

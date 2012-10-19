@@ -160,21 +160,6 @@ sub moveToLibrary
   return 1;
 }
 
-sub existingFilesInLibrary
-{
-  my $folder = shift;
-  my $name = shift;
-  opendir DIR, $folder;
-  my @matches = ();
-  while(my $file = readdir DIR){
-    if($file =~ m/(.*)\..*$/gi){
-      push(@matches, $folder.'/'.$file) if($1 eq $name);
-    }
-  }
-  closedir DIR;
-  return @matches;
-}
-
 sub pidBegin
 {
   my $pidfile = shift;
