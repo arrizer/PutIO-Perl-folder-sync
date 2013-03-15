@@ -8,7 +8,7 @@ INSTALLATION
 
 The script requires the following perl modules to be installed:
 
-WebService::PutIo::Files 
+WebService::PutIOv2 (get it here: https://github.com/Pro/WebService-PutIOv2)
 Getopt::Long
 Data::Dumper
 LWP::UserAgent
@@ -22,7 +22,7 @@ Use 'install_perl_modules.sh' to install/update the modules via the cpan tool
 SETUP
 =====
 
-Rename config.xml.template to config.xml and enter your API-Key and secret (found in put.io -> Your Account -> Settings) and your put.io username and password (required for https secured downloads).
+Rename config.xml.template to config.xml and enter your authentication token (get it here: https://api.put.io/v2/oauth2/authenticate?client_id=411&response_type=code&redirect_uri=http://profanter.me/putio/perl).
 
 For each folder you want to sync, add a block like this:
 

@@ -1,3 +1,15 @@
+Version 0.8
+===========
+
+* Added all extensions because they ARE supported
+* Now Using APIv2
+
+Version 0.7
+===========
+
+* Removed all extensions because they are no longer supported
+* Fixed a realm authentication bug for HTTP downloads
+
 Version 0.6
 ===========
 

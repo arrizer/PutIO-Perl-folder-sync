@@ -17,7 +17,7 @@ if(!$windows and getpwuid($<) ne 'root'){
 }
 
 my @requiredModules = (
-  'WebService::PutIo::Files',
+  'WebService::PutIOv2',
   'Getopt::Long',
   'Data::Dumper',
   'LWP::UserAgent',
@@ -26,18 +26,14 @@ my @requiredModules = (
   'File::Path',
   'Term::ReadKey',
   'WWW::Mechanize',
-  'IO::Null',
   'JSON',
-  'URI::Escape',
-  'Mail::Sendmail',
-  'Net::DNS',
-  'Net::Twitter',
+  'URI::Escape'
 );
 
 if($windows){
   # Append additional windose modules
-	push(@requiredModules,"Win32::Console::ANSI");
-	push(@requiredModules,"Win32::File");
+  push(@requiredModules,"Win32::Console::ANSI");
+  push(@requiredModules,"Win32::File");
 }
 
 for my $moduleName (@requiredModules){

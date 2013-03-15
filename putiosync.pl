@@ -2,7 +2,6 @@
 $| = 1; # Disable output caching
 
 
-use WebService::PutIOv2;
 use Getopt::Long;
 use Data::Dumper;
 use LWP::UserAgent;
@@ -15,6 +14,9 @@ use Cwd 'abs_path';
 use utf8;
 use warnings;
 use strict;
+no warnings 'deprecated';
+use lib 'D:\Dropbox\WebService-PutIOv2\lib';
+use WebService::PutIOv2;
 
 $SIG{INT} = \&catchSigInt;
 $SIG{TERM} = \&catchSigInt;
@@ -27,7 +29,7 @@ require Win32::Console::ANSI;
 	import Win32::File;
 }
 
-my $version = '0.6';
+my $version = '0.8';
 our $mypath = abs_path(File::Basename::dirname(__FILE__));
 our $verbosity = 0; # -1 = quiet, 0 = normal, 1 = verbose, 2 = debug
 my $config_file = $mypath."/config.xml";
