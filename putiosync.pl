@@ -1,7 +1,8 @@
 #!/usr/bin/env perl
 $| = 1; # Disable output caching
 
-use WebService::PutIo::Files;
+
+use WebService::PutIOv2;
 use Getopt::Long;
 use Data::Dumper;
 use LWP::UserAgent;
@@ -53,9 +54,7 @@ our $config = XMLin($config_file, ForceArray => ['sync', 'tvshows', 'movies']);
 my $agent = LWP::UserAgent->new();
    $agent->add_handler(request_prepare => \&prepareRequest);
    $agent->add_handler(response_header => \&didReceiveResponse);
-   $agent->credentials("put.io", "Login Required", $config->{"account_name"}, $config->{"account_password"});
-my $putio = WebService::PutIo::Files->new('api_key' => $config->{"api_key"}, 
-                                          'api_secret' => $config->{"api_secret"});
+my $putio = WebService::PutIOv2->new('access_token' => $config->{"access_token"});
 
 our @media_added = ();
 if(!$options{'no-sync'}){
@@ -126,9 +125,9 @@ sub queuePutIoFolder
   my $recursive = shift or 0;
   my @queue = ();
 
-  my $res = $putio->list('parent_id', $source_id);
-  foreach my $file (@{$res->results}){
-    if($file->{"type"} eq "folder"){
+  my @res = $putio->getFilesList($source_id);
+  foreach my $file (@res){
+    if($file->{"content_type"} eq "application/x-directory"){
       next() if(!$recursive);
       push(@queue, queuePutIoFolder($file->{"id"}, $target."/".$file->{"name"}, 1));
       next();
@@ -161,12 +160,10 @@ sub findPutIoFolderIdInternal
   my $depth = shift;
   my @path = split('/', $path);
 
-  my $res;
-  $res = $putio->list() if($node == 0);
-  $res = $putio->list('parent_id' => "$node") if($node != 0);
+  my @res = $putio->getFilesList($node);
   
-  foreach my $file (@{$res->results}){
-    next() if($file->{"type"} ne "folder");
+  foreach my $file (@res){
+    next() if($file->{"content_type"} ne "application/x-directory");
     if($file->{"name"} eq $path[$depth]){
       return $file->{"id"} if($#path == $depth);
       return findPutIoFolderIdInternal($file->{"id"}, $path, $depth + 1);
@@ -182,7 +179,7 @@ sub downloadFiles
   foreach my $file (@downloadQueue){
     $cnt++;
     printfv(0, "Fetching '%s' [%i of %i]", $file->{"name"}, $cnt, $#downloadQueue + 1);
-    my $url = $file->{"download_url"};
+    my $url = $putio->getDownloadUrl($file->{"id"});
     make_path($file->{"target"});
     make_path($file->{"target_folder"}.'/'.$download_temp_dir);
   	if ($windows){
@@ -192,8 +189,12 @@ sub downloadFiles
     my $temp_filename = $file->{"target_folder"}.'/'.$download_temp_dir.'/'.$file->{"name"};
     my $succeeded = downloadFile($url, $filename, $temp_filename, $file->{"size"});
     if($succeeded and $file->{"delete_source"}){
-      $putio->delete(id => $file->{"id"});
-      printfv(1, "Deleted the file on put.io");
+      if ($putio->deleteFile(id => $file->{"id"}))
+	  {
+		printfv(1, "Deleted the file on put.io");
+	  } else {
+		printfvc(0, "Couldn't delete file put.io", 'red');
+	  }
     }
   }
 }

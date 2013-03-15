@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <putiosyncconfig>
-  <!-- The API key and secret can be found in your put.io account settings -->
-  <api_key>myapikey</api_key>
-  <api_secret>myapisecret</api_secret>
-
-  <!-- This is your put.io account name and password used for downloading via https -->
-  <account_name>foobar@example.com</account_name>
-  <account_password>mypassword</account_password>
+  <!-- Your access token. You can get it here: https://api.put.io/v2/oauth2/authenticate?client_id=411&response_type=code&redirect_uri=http://profanter.me/putio/perl -->
+  <access_token>XXXXXXX</access_token>
   
   <!-- Add a <sync> tag for each remote folder that should be synced -->
   <sync>
