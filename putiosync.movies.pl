@@ -28,7 +28,7 @@ foreach my $task (@{$config->{"movies"}}){
   }
   
   printfv(0, "Organizing movies in '%s'...", $inbox);
-  my @files = filesInFolder($inbox);
+  my @files = filesInFolder($inbox,"",1,0,$task->{"cleanup_regex"},$task->{"remove_empty_dir"}eq"true");
   foreach my $file (@files){
     my $match = matchFile($inbox.$file);
     next() if(!$match);

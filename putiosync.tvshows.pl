@@ -22,7 +22,7 @@ foreach my $task (@{$config->{"tvshows"}}){
   }
   
   printfv(0, "Organizing TV shows in '%s'...", $inbox);
-  my @files = filesInFolder($inbox);
+  my @files = filesInFolder($inbox,"",1,0,$task->{"cleanup_regex"},$task->{"remove_empty_dir"}eq"true");
   foreach my $file (@files){
     my $match = matchFile($inbox.$file);
     next() if(!$match);

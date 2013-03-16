@@ -93,7 +93,7 @@ sub queueSyncItems
     	printfvc(0, "The target folder '%s' does not exist!", 'red', $target);
       next();
     }
-    my @newQueue = queuePutIoFolderPath($source, $target, $recursive, $delete_subfolder);
+    my @newQueue = queuePutIoFolderPath($source, $target, $recursive,$delete_source, $delete_subfolder);
     for(my $i = 0; $i < scalar(@newQueue); $i++){
       $newQueue[$i]->{"delete_source"} = $delete_source;
       $newQueue[$i]->{"target_folder"} = $target;
@@ -112,6 +112,7 @@ sub queuePutIoFolderPath
   my $source = shift;
   my $target = shift;
   my $recursive = shift or 0;
+  my $delete_source = shift or 0;
   my $delete_subfolder = shift or 0;
   my $source_id = findPutIoFolderId($source);
   if(!$source_id){
@@ -119,7 +120,7 @@ sub queuePutIoFolderPath
     return 0;
   }
   
-  return queuePutIoFolder($source_id, $target, $recursive, $delete_subfolder);
+  return queuePutIoFolder($source_id, $target, $recursive,0,$delete_source, $delete_subfolder);
 }
 
 sub queuePutIoFolder
@@ -127,11 +128,13 @@ sub queuePutIoFolder
   my $source_id = shift;
   my $target = shift;
   my $recursive = shift or 0;
+  my $depth = shift or 0;
+  my $delete_source = shift or 0;
   my $delete_subfolder = shift or 0;
   my @queue = ();
 
   my @res = $putio->getFilesList($source_id);
-  if (scalar(@res) == 0 && $recursive > 0 && $delete_subfolder) {
+  if (scalar(@res) == 0 && $depth > 0 && $delete_subfolder) {
 	my $file = $putio->getFileInfo($source_id);
 	printfvc(0, "Folder '%s' empty. Deleting ...",'green', $file->{"name"});
 	  if ($putio->deleteFile($source_id))
@@ -145,13 +148,21 @@ sub queuePutIoFolder
   foreach my $file (@res){
     if($file->{"content_type"} eq "application/x-directory"){
       next() if(!$recursive);
-      push(@queue, queuePutIoFolder($file->{"id"}, $target."/".$file->{"name"}, 1, $delete_subfolder));
+      push(@queue, queuePutIoFolder($file->{"id"}, $target."/".$file->{"name"}, 1,$depth+1,$delete_source, $delete_subfolder));
       next();
     }
     if(-e $target."/".$file->{"name"}){
       my @stat = stat($target."/".$file->{"name"});
       if(scalar($file->{"size"}) == $stat[7]){
         printfv(1, "File '%s' already exists and will be skipped", $file->{"name"});
+		if($delete_source){
+		  if ($putio->deleteFile($file->{"id"}))
+		  {
+			printfv(1, "Deleted the file on put.io");
+		  } else {
+			printfvc(0, "Couldn't delete file put.io", 'red');
+		  }
+		}
         next();
       }else{
         printfv(1, "File '%s' exists but has a different size. Will be redownloaded", $file->{"name"});

@@ -40,8 +40,15 @@
           always = Always use the new file
           ask = Ask each time
           bigger = Overwrite if the income file is bigger in size (<-> has better quality)
+          bigger-delete = same as bigger. If income file is smaller it will be deleted.
      -->
     <overwrite_strategy>ask</overwrite_strategy>
+	<!-- Cleanup (delete) files which match the following regex.
+	Make sure that the regex is correct! Otherwise needed files may be deleted.
+	-->
+	<cleanup_regex>.*\.(txt|nfo)$</cleanup_regex>
+	<!-- Set to true if you want to remove empty directories -->
+	<remove_empty_dir>true</remove_empty_dir>
   </tvshows>
   
   <movies>
@@ -60,6 +67,12 @@
     <filename>%title_sortable% (%year%)</filename>
     <!-- Same as for <tvshows> -->
     <overwrite_strategy>ask</overwrite_strategy>
+	<!-- Cleanup (delete) files which match the following regex.
+	Make sure that the regex is correct! Otherwise needed files may be deleted.
+	-->
+	<cleanup_regex>.*\.(txt|nfo)$</cleanup_regex>
+	<!-- Set to true if you want to remove empty directories -->
+	<remove_empty_dir>true</remove_empty_dir>
   </movies>
   
   <twitter>

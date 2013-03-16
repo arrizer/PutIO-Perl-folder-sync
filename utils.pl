@@ -50,22 +50,31 @@ sub filesInFolder
   my $path = shift;
   my $subdir = shift or "";
   my $recursive = shift or 1;
+  my $depth = shift or 0;  
+  my $cleanup_regex = shift or "";  
+  my $remove_empty_dir = shift or 0;
   my $allowed_extensions = shift;
      $allowed_extensions = ['mov', 'avi', 'mp4', 'mpeg4', 'mkv', 'mts', 'ts', '3gp'] if(!$allowed_extensions);
   my $extensions_regexp = join('|', @{$allowed_extensions});
   my @files = ();
-  opendir DIR, $path.'/'.$subdir;
+  my $dir = $path.$subdir;
+  opendir DIR, $dir;
   foreach my $file (readdir DIR){
     next() if($file =~ m/^\./gi);
-    my $file_abs = $path.'/'.$subdir.'/'.$file;
+    my $file_abs = $path.$subdir.'/'.$file;
     if(-d $file_abs){
-      push(@files, filesInFolder($path, $subdir."/".$file));
+      push(@files, filesInFolder($path, $subdir."/".$file, $recursive,$depth+1,$cleanup_regex, $remove_empty_dir, $allowed_extensions));
       next();
     }elsif($file =~ m/\.($extensions_regexp)$/gi){
       push(@files, $subdir.'/'.$file);
-    }
+    } elsif($file =~ m/\.($cleanup_regex)$/gi){
+		unlink($file_abs) or printfvc(0, "Couldn't clean up file %s: " . $!, 'red',$file_abs);
+	}
   }
   closedir DIR;
+  if (scalar(@files) == 0 && $depth > 0 && $remove_empty_dir && -d $dir) {
+	rmdir($dir) or printfvc(0, "Couldn't delete directory %s $!", 'red',$dir);
+  }  
   return @files;
 }
 
@@ -137,11 +146,14 @@ sub moveToLibrary
       }
       return if($choice ne "y\n");
     }
-    elsif($overwrite_strategy eq "bigger"){
+    elsif($overwrite_strategy eq "bigger" or $overwrite_strategy eq "bigger-delete"){
       if(@stat_new[7] > @stat_old[7]){
         printfvc(0, "A smaller file is already present in the library and will be overwritten.", 'green');
       }else{
         printfvc(0, "A bigger or equally sized file is already present in the library. Skipping.", 'red');
+		if ($overwrite_strategy eq "bigger-delete") {
+			unlink($match->{"file"}) or printfvc(0, "Couldn't delete file %s: " . $!, 'red',$match->{"file"});
+		}
         return;
       }
     }else{ #aka 'never'
