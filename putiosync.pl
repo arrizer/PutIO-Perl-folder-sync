@@ -15,7 +15,7 @@ use utf8;
 use warnings;
 use strict;
 no warnings 'deprecated';
-use lib 'D:\Dropbox\WebService-PutIOv2\lib';
+use lib './WebService-PutIOv2/lib/';
 use WebService::PutIOv2;
 
 $SIG{INT} = \&catchSigInt;

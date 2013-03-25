@@ -1,0 +1,3 @@
+[submodule "WebService-PutIOv2"]
+	path = WebService-PutIOv2
+	url = git://github.com/Pro/WebService-PutIOv2.git
