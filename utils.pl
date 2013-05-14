@@ -34,7 +34,10 @@ sub printfvc
   print color $color if($color ne '');
   my $string = sprintf($format, @parameters);
   if($string !~ m/\n/gis){
-    ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
+    ($wchar, $hchar, $wpixels, $hpixels) = (80,24,0,0);
+    eval{
+      ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
+    };
     $string = substr($string, 0, $wchar);
     printf("%-".($wchar-1)."s", $string);
   }else{
