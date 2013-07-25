@@ -151,6 +151,7 @@ sub queuePutIoFolder
       push(@queue, queuePutIoFolder($file->{"id"}, $target."/".$file->{"name"}, 1,$depth+1,$delete_source, $delete_subfolder));
       next();
     }
+	$file->{"name"} =~ s/://gi; #Replace colon, otherwise subfolders will fail
     if(-e $target."/".$file->{"name"}){
       my @stat = stat($target."/".$file->{"name"});
       if(scalar($file->{"size"}) == $stat[7]){
@@ -169,6 +170,7 @@ sub queuePutIoFolder
       }
     }
 	$target =~ s/\s\//\//gi; #Remove whitespace before slash, otherwise subfolders will fail
+	$target =~ s/://gi; #Replace colon, otherwise subfolders will fail
     $file->{"target"} = $target;
     push(@queue, $file);
   }
@@ -413,7 +415,7 @@ Options: -v  --verbose          Show more detailed status information
 
 sub runExtensions
 {
-  my @extensions = ('tvshows', 'twitter', 'mail');
+  my @extensions = ('tvshows');#, 'twitter', 'mail');
 	for my $extension (@extensions){
     printfv(1, "Running extension '%s'", $extension);
     require $mypath."/putiosync.".$extension.".pl";
