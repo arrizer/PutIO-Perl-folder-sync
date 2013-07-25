@@ -19,6 +19,19 @@ Win32::Console::ANSI
 
 Use 'install_perl_modules.sh' to install/update the modules via the cpan tool
 
+Init submodule
+--------------
+The Put.io WebService api is accesses through https://github.com/Pro/WebService-PutIOv2
+This repository is included into this as a submodule.
+
+Simply checkout this repository, then use the following commands to additionally check out the WebService-PutIOv2 repo:
+
+git submodule init
+git submodule update
+
+
+Alternatively you can also download the content of the WebService-PutIOv2 repo directly into the corresponding folder.
+
 SETUP
 =====
 

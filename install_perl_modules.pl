@@ -27,7 +27,8 @@ my @requiredModules = (
   'Term::ReadKey',
   'WWW::Mechanize',
   'JSON',
-  'URI::Escape'
+  'URI::Escape',
+  'IO::Null',
 );
 
 if($windows){
