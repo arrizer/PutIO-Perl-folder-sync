@@ -17,6 +17,8 @@ use strict;
 no warnings 'deprecated';
 use lib './WebService-PutIOv2/lib/';
 use WebService::PutIOv2;
+use Encode qw(decode encode);
+use encoding "utf-8";
 
 $SIG{INT} = \&catchSigInt;
 $SIG{TERM} = \&catchSigInt;
@@ -170,7 +172,7 @@ sub queuePutIoFolder
       }
     }
 	$target =~ s/\s\//\//gi; #Remove whitespace before slash, otherwise subfolders will fail
-    $file->{"target"} = $target;
+    $file->{"target"} = encode('UTF-8',$target);
     push(@queue, $file);
   }
   return @queue;
