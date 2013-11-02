@@ -33,17 +33,18 @@ sub printfvc
   return if($level > $verbosity);
   print color $color if($color ne '');
   my $string = sprintf($format, @parameters);
-  if($string !~ m/\n/gis){
-    ($wchar, $hchar, $wpixels, $hpixels) = (80,24,0,0);
-    eval{
-      ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
-    };
-    $string = substr($string, 0, $wchar);
-    printf("%-".($wchar-1)."s", $string);
-  }else{
-    print($string);
-  }
-  
+# RIP: Padding with white-space to the right
+# That does not work on all shells, and it fails in background processes without shell, so we don't do that anymore
+#   if($string !~ m/\n/gis){
+#     ($wchar, $hchar, $wpixels, $hpixels) = (80,24,0,0);
+#     eval{
+#       ($wchar, $hchar, $wpixels, $hpixels) = GetTerminalSize();
+#     };
+#     $string = substr($string, 0, $wchar);
+#     printf("%-".($wchar-1)."s", $string);
+#   }else{
+#  }
+  print($string);
   print color 'reset';
   print("\n");
 }

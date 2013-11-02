@@ -60,21 +60,22 @@ my $agent = LWP::UserAgent->new();
    $agent->add_handler(response_header => \&didReceiveResponse);
 my $putio = WebService::PutIOv2->new('access_token' => $config->{"access_token"});
 
-our @media_added = ();
-if(!$options{'no-sync'}){
-  my @downloadQueue = queueSyncItems();
-  downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
+while(1){
+  our @media_added = ();
+  if(!$options{'no-sync'}){
+    my @downloadQueue = queueSyncItems();
+    downloadFiles(\@downloadQueue) if(!$options{'dry'} and $#downloadQueue > -1);
+  }
+  runExtensions() if(!$options{'no-extensions'});
+  if($options{'wait'}){
+    printfv(0, "Waiting %i seconds, then running again", $options{'wait'});
+    sleep($options{'wait'});
+  }else{
+    last;
+  }
 }
-runExtensions() if(!$options{'no-extensions'});
 pidFinish($pid_file);
 exit();
-
-
-
-
-
-
-
 
 
 
@@ -137,15 +138,14 @@ sub queuePutIoFolder
 
   my @res = $putio->getFilesList($source_id);
   if (scalar(@res) == 0 && $depth > 0 && $delete_subfolder) {
-	my $file = $putio->getFileInfo($source_id);
-	printfvc(0, "Folder '%s' empty. Deleting ...",'green', $file->{"name"});
-	  if ($putio->deleteFile($source_id))
-	  {
-		printfv(1, "Deleted the file on put.io");
-	  } else {
-		printfvc(0, "Couldn't delete file put.io", 'red');
-	  }
-	return @queue;
+  	my $file = $putio->getFileInfo($source_id);
+  	printfvc(0, "Folder '%s' is empty. Deleting ...",'green', $file->{"name"});
+    if ($putio->deleteFile($source_id)){
+    	printfv(1, "Deleted the file on put.io");
+    }else{
+  	  printfvc(0, "Couldn't delete file put.io", 'red');
+    }
+  	return @queue;
   }
   foreach my $file (@res){
 	$file->{"name"} =~ s/://gi; #Replace colon, otherwise subfolders will fail
@@ -158,20 +158,19 @@ sub queuePutIoFolder
       my @stat = stat($target."/".$file->{"name"});
       if(scalar($file->{"size"}) == $stat[7]){
         printfv(1, "File '%s' already exists and will be skipped", $file->{"name"});
-		if($delete_source){
-		  if ($putio->deleteFile($file->{"id"}))
-		  {
-			printfv(1, "Deleted the file on put.io");
-		  } else {
-			printfvc(0, "Couldn't delete file put.io", 'red');
-		  }
-		}
+    		if($delete_source){
+    		  if ($putio->deleteFile($file->{"id"})){
+      			printfv(1, "Deleted the file on put.io");
+    		  }else{
+    		  	printfvc(0, "Couldn't delete file put.io", 'red');
+    		  }
+   		  }
         next();
       }else{
         printfv(1, "File '%s' exists but has a different size. Will be redownloaded", $file->{"name"});
       }
     }
-	$target =~ s/\s\//\//gi; #Remove whitespace before slash, otherwise subfolders will fail
+    $target =~ s/\s\//\//gi; #Remove whitespace before slash, otherwise subfolders will fail
     $file->{"target"} = encode('UTF-8',$target);
     push(@queue, $file);
   }
@@ -219,12 +218,11 @@ sub downloadFiles
     my $temp_filename = $file->{"target_folder"}.'/'.$download_temp_dir.'/'.$file->{"name"};
     my $succeeded = downloadFile($url, $filename, $temp_filename, $file->{"size"});
     if($succeeded and $file->{"delete_source"}){
-      if ($putio->deleteFile($file->{"id"}))
-	  {
-		printfv(1, "Deleted the file on put.io");
-	  } else {
-		printfvc(0, "Couldn't delete file put.io", 'red');
-	  }
+      if ($putio->deleteFile($file->{"id"})){
+        printfv(1, "Deleted the file on put.io");
+      }else{
+		    printfvc(0, "Couldn't delete file put.io", 'red');
+	    }
     }
   }
 }
@@ -343,6 +341,7 @@ sub processCommandLine
   $options{"no-resume"} = 0;
   $options{"pid"} = "";
   $options{"no-color"} = 0;
+  $options{"wait"} = 0;
   
   my @flags = (
     "v|verbose", 
@@ -360,7 +359,8 @@ sub processCommandLine
     "imdb-results=i",
     "tv-shows-ask",
     "no-twitter",
-    "no-mail"
+    "no-mail",
+    "wait=i"
   );
   GetOptions(\%options, @flags);
   $verbosity = 1 if($options{'v'});
@@ -410,6 +410,7 @@ Options: -v  --verbose          Show more detailed status information
              --tv-shows-ask     Always ask to which TV show a file belongs
              --no-twitter       Don't twitter anything
              --no-mail       	  Don't send any mails
+             --wait <secs>      Wait for this many seconds, then sync again
 ");
   exit();
 }
@@ -419,7 +420,12 @@ sub runExtensions
   my @extensions = ('tvshows');#, 'twitter', 'mail');
 	for my $extension (@extensions){
     printfv(1, "Running extension '%s'", $extension);
+    eval{
     require $mypath."/putiosync.".$extension.".pl";
+    };
+    if($@){
+      printfvc(1, "Error in plugin '%s': %s", 'red', $extension, $@);
+    }
     printfv(1, "Extension '%s' did finish running", $extension);
 	}
 }

@@ -34,11 +34,14 @@ sub tvdbEpisodeForDate
   printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $seriesName, $year, $month, $day);
   my $matches = tvdbSearch($seriesName);
   my @matches = @$matches;
-  printfv(1, "First Series Name found: %s", @matches[0]->{"seriesid"});
-  return undef if (scalar @matches <= 0);
-  my $seriesId = @matches[0]->{"seriesid"};
-  my $data = _xmlRequest('GetEpisodeByAirDate.php?apikey='.$api_key.'&seriesid='.$seriesId.'&airdate='.$day."-".$month."-".$year);
-  return $data->{"Episode"};
+  if(scalar(@matches)){
+    printfv(1, "First Series Name found: %s", @matches[0]->{"seriesid"});
+    return undef if (scalar @matches <= 0);
+    my $seriesId = @matches[0]->{"seriesid"};
+    my $data = _xmlRequest('GetEpisodeByAirDate.php?apikey='.$api_key.'&seriesid='.$seriesId.'&airdate='.$day."-".$month."-".$year);
+    return $data->{"Episode"};
+  }
+  return undef;
 }
 
 sub tvdbEpisodeForDateId
