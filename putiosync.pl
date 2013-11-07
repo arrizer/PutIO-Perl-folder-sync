@@ -120,7 +120,7 @@ sub queuePutIoFolderPath
   my $source_id = findPutIoFolderId($source);
   if(!$source_id){
     printfvc(0, "The folder '$source' was not found on put.io!", 'red');
-    return 0;
+    return ();
   }
   
   return queuePutIoFolder($source_id, $target, $recursive,0,$delete_source, $delete_subfolder);
