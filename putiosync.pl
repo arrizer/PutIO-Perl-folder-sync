@@ -417,7 +417,7 @@ Options: -v  --verbose          Show more detailed status information
 
 sub runExtensions
 {
-  my @extensions = ('tvshows');#, 'twitter', 'mail');
+  my @extensions = ('tvshows','mail','pushover');
 	for my $extension (@extensions){
     printfv(1, "Running extension '%s'", $extension);
     eval{
