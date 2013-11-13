@@ -8,16 +8,20 @@ INSTALLATION
 
 The script requires the following perl modules to be installed:
 
+<pre>
 WebService::PutIOv2 (get it here: https://github.com/Pro/WebService-PutIOv2)
 Getopt::Long
 Data::Dumper
 LWP::UserAgent
 XML::Simple
+</pre>
 
 On Windows additionally:
+<pre>
 Win32::Console::ANSI
+</pre>
 
-Use 'install_perl_modules.sh' to install/update the modules via the cpan tool
+Use `install_perl_modules.sh` to install/update the modules via the cpan tool
 
 Init submodule
 --------------
@@ -26,8 +30,10 @@ This repository is included into this as a submodule.
 
 Simply checkout this repository, then use the following commands to additionally check out the WebService-PutIOv2 repo:
 
+<pre>
 git submodule init
 git submodule update
+</pre>
 
 
 Alternatively you can also download the content of the WebService-PutIOv2 repo directly into the corresponding folder.
@@ -35,16 +41,18 @@ Alternatively you can also download the content of the WebService-PutIOv2 repo d
 SETUP
 =====
 
-Rename config.xml.template to config.xml and enter your authentication token (get it here: https://api.put.io/v2/oauth2/authenticate?client_id=411&response_type=code&redirect_uri=http://profanter.me/putio/perl).
+Rename `config.xml.template` to `config.xml` and enter your authentication token (get it here: https://api.put.io/v2/oauth2/authenticate?client_id=411&response_type=code&redirect_uri=http://profanter.me/putio/perl).
 
 For each folder you want to sync, add a block like this:
 
-  <sync>
+```xml
+<sync>
     <remote_path>TV Shows</remote_path>
     <local_path>/AnkhMorpork/Series/Inbox</local_path>
-  </sync>
+</sync>
+```
 
-to the config.xml (inside <putiosyncconfig>).
+to the `config.xml` (inside `<putiosyncconfig>`).
 
 See the config file template for details about the configuration.
 
@@ -53,8 +61,8 @@ RUN
 
 To run the script, simply use
 
-$ perl putiosync.pl
+`$ perl putiosync.pl`
 
 from the command line.
-Use the -h flag to see all available options.
+Use the `-h` flag to see all available options.
 I recommend to schedule the script via cronjob, launchd or your native system task scheduler.
