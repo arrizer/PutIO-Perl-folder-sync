@@ -135,7 +135,7 @@ sub matchFile
 		my @names = ();
 		push(@names,$series);
 		$series =~ s/20\d{2}//gi; #remove year
-		if (!grep( /^$series$/, @names )){
+		if (!grep( /^\Q$series$/, @names )){
 			push(@names,$series);
 		}
 		foreach my $name (@names){
