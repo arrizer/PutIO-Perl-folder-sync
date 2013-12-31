@@ -10,6 +10,29 @@ my $pattern_map = {
     '%title%' => 'EpisodeName'
 };
 
+my $series_mapping = undef;
+my $mapping_file = $mypath.'/series_mapping.yaml';
+if(-e $mapping_file){
+	
+	use YAML::XS qw(Load);
+
+	my $hash = {
+		'.*Agents of S[\s\.]*H[\s\.]*I[\s\.]*E[\s\.]*L[\s\.]*D' => "Marvel's Agents of S.H.I.E.L.D"
+	};
+	
+
+ 
+	my $yaml;
+	{
+	  local $/; #Enable 'slurp' mode
+	  open my $fh, "<", $mapping_file;
+	  $yaml = <$fh>;
+	  close $fh;
+	}
+	
+	$series_mapping = Load($yaml);
+}
+
 foreach my $task (@{$config->{"tvshows"}}){
   my $inbox = $task->{"inbox"};
   if(!-e $inbox){
@@ -71,6 +94,8 @@ sub matchFile
   my $dateExtracted = 0;
   my $date_match_filename = $filename;
   
+  
+  
   my ($year, $month, $day) = (0,0,0);
   if($extracted){
   
@@ -86,6 +111,17 @@ sub matchFile
       $series =~ s/\./ /gi;
       $dateExtracted = 1;
     }  
+	
+	if (defined($series_mapping)) {
+		foreach my $key (keys $series_mapping) {
+			if($series =~ m/$key/gi) {
+				printfv(1, "Mapped '%s' to '%s'", $series, $series_mapping->{$key});
+				$series = $series_mapping->{$key};
+				last;			
+			}
+		}
+	}
+	
     printfv(1, "Looking for '%s' Season %02i Episode %02i...", $series, $season, $episode) unless $dateExtracted;
     printfv(1, "Looking for '%s' from %04i-%02i-%02i...", $series, $year, $month, $day) if $dateExtracted;
     my $item = undef;
