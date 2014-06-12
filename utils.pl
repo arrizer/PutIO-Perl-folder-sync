@@ -132,6 +132,7 @@ sub moveToLibrary
   
   # Remove invalid chacracters from filename
   $file =~ s/[<>:"\/\\|\?\*]//g;
+  $folder =~ s/[<>:"\?\*]//g;
   
   my @existing = existingFilesInLibrary($target.'/'.$folder, $file);
   if(scalar(@existing) == 1){
